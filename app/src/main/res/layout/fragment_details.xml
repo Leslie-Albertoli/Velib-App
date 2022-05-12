@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/details_fond"
+    android:id="@+id/details_xml">
+
+
+    <TextView
+        android:id="@+id/details_station_name_textview"
+        android:textStyle="bold"
+        android:textAlignment="center"
+        android:textColor="#C43AB379"
+        android:textSize="22dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.050"/>
+    <!--android:textColor="#2C8A5D"-->
+
+    <LinearLayout
+        android:id="@+id/details_nb_bike_linearlayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/details_station_name_textview"
+        app:layout_constraintVertical_bias="0.050">
+
+        <ImageView
+            android:id="@+id/details_nb_bike_imageview"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginRight="10dp"
+            android:src="@drawable/im_details_nb_bike"></ImageView>
+
+        <TextView
+            android:id="@+id/details_title_nb_bike_textview"
+            android:textStyle="bold"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="10dp"
+            android:text="@string/details_title_nb_bike" />
+
+        <TextView
+            android:id="@+id/details_nb_bike_textview"
+            android:textSize="18dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/details_nb_place_linearlayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
+        app:layout_constraintVertical_bias="0.030">
+
+        <ImageView
+            android:id="@+id/details_nb_place_imageview"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginRight="10dp"
+            android:src="@drawable/im_details_nb_place"></ImageView>
+
+        <TextView
+            android:id="@+id/details_title_nb_place_textview"
+            android:textStyle="bold"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="10dp"
+            android:text="@string/details_title_nb_place" />
+
+        <TextView
+            android:id="@+id/details_nb_place_textview"
+            android:textSize="18dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"/>
+    </LinearLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

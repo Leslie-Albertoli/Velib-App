@@ -1,5 +1,6 @@
 package com.example.velib_app
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -59,8 +60,24 @@ class MapFragment : SupportMapFragment(), OnMapReadyCallback {
             val stationDetailsClicked = stationDetails.find {
                 it.station_id == stationClicked?.station_id
             }
-            Log.d(TAG, "synchroApiClicked: $stationClicked")
-            Log.d(TAG, "synchroApiClickedDetails: $stationDetailsClicked")
+
+            val name = stationClicked?.name
+            val numBikesAvailable = stationDetailsClicked?.numBikesAvailable.toString()
+            val numDocksAvailable= stationDetailsClicked?.numDocksAvailable.toString()
+            val intent = Intent(getActivity(), DetailsFragment::class.java)
+            /*intent.putExtra(name, "name")
+            intent.putExtra(numBikesAvailable, "numBikesAvailable")
+            intent.putExtra(numDocksAvailable, "numDocksAvailable")*/
+            intent.putExtra("name", name)
+            intent.putExtra("numBikesAvailable", numBikesAvailable)
+            intent.putExtra("numDocksAvailable", numDocksAvailable)
+            startActivity(intent)
+
+            /*Log.d(TAG, "synchroApiClicked: $stationClicked")
+            Log.d(TAG, "synchroApiClickedDetails: $stationDetailsClicked")*/
+            /*Log.d(TAG, "name: $name")
+            Log.d(TAG, "numBikesAvailable: $numBikesAvailable")
+            Log.d(TAG, "numDocksAvailable: $numDocksAvailable")*/
             true
         }
         // Set default position

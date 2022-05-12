@@ -3,7 +3,6 @@ package com.example.velib_app.api
 import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
 import retrofit2.http.GET
-import retrofit2.http.Path
 
 interface StationService {
 

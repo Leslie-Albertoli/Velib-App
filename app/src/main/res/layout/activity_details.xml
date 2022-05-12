@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/details_xml"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/details_fond"
-    android:id="@+id/details_xml">
+    android:orientation="vertical">
 
 
     <TextView
@@ -13,7 +15,7 @@
         android:textStyle="bold"
         android:textAlignment="center"
         android:textColor="#C43AB379"
-        android:textSize="22dp"
+        android:textSize="22sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
@@ -35,21 +37,24 @@
             android:id="@+id/details_nb_bike_imageview"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:layout_marginRight="10dp"
-            android:src="@drawable/im_details_nb_bike"></ImageView>
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/im_details_nb_bike"
+            android:contentDescription="@string/details_bikes_picture_description" />
 
         <TextView
             android:id="@+id/details_title_nb_bike_textview"
             android:textStyle="bold"
+            android:textColor="#C43AB379"
             android:layout_width="250dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_marginRight="10dp"
+            android:layout_marginEnd="10dp"
             android:text="@string/details_title_nb_bike" />
 
         <TextView
             android:id="@+id/details_nb_bike_textview"
-            android:textSize="18dp"
+            android:textSize="18sp"
+            android:textColor="#C43AB379"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"/>
@@ -68,25 +73,28 @@
             android:id="@+id/details_nb_place_imageview"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:layout_marginRight="10dp"
-            android:src="@drawable/im_details_nb_place"></ImageView>
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/im_details_nb_place"
+            android:contentDescription="@string/details_docks_picture_description" />
 
         <TextView
             android:id="@+id/details_title_nb_place_textview"
             android:textStyle="bold"
             android:layout_width="250dp"
+            android:textColor="#C43AB379"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_marginRight="10dp"
+            android:layout_marginEnd="10dp"
             android:text="@string/details_title_nb_place" />
 
         <TextView
             android:id="@+id/details_nb_place_textview"
-            android:textSize="18dp"
+            android:textSize="18sp"
+            android:textColor="#C43AB379"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"/>
     </LinearLayout>
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

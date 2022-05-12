@@ -7,6 +7,4 @@ data class Station(
     val lon: Double,
     val capacity: Int,
     val station_code: String
-) {
-
-}
+) {}

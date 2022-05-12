@@ -9,8 +9,3 @@ data class StationDetails(
     val is_returning: Int,
     val is_renting: Int
 ) {}
-
-data class TypesBikes(
-    val mechanical: Int = 0,
-    val ebike: Int? = 0
-) {}

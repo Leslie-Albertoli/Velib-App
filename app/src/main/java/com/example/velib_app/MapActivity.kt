@@ -2,18 +2,22 @@ package com.example.velib_app
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.database.Cursor
+import android.database.MatrixCursor
 import android.location.Location
 import android.location.LocationManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
+import android.provider.BaseColumns
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.velib_app.api.StationService
 import com.example.velib_app.model.Station
@@ -23,29 +27,46 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.places.api.Places
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import com.google.android.libraries.places.api.Places
 
 private const val TAG = "MapActivity"
-class MapActivity : AppCompatActivity() {
+private const val PERMISSION_ID = 42
+private const val MAPVIEW_BUNDLE_KEY: String = "MapViewBundleKey"
 
-    private val pERMISSION_ID = 42
-
-    private var mapFragment: SupportMapFragment? = null
-    private var currentLocation: LatLng = LatLng(48.78896362751979, 2.3272018540134964)
-    lateinit var mFusedLocationClient: FusedLocationProviderClient
-    lateinit var mMap: GoogleMap
+class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val stations: MutableList<Station> = mutableListOf()
+    private val stationsTitle: MutableList<String> = mutableListOf()
     private val stationDetails: MutableList<StationDetails> = mutableListOf()
+    private var currentLocation: LatLng = LatLng(48.78896362751979, 2.3272018540134964)
+
+    lateinit var mapView: MapView
+    lateinit var mFusedLocationClient: FusedLocationProviderClient
+    lateinit var mMap: GoogleMap
+    lateinit var locationSearchView: SearchView
+    lateinit var cursorAdapter: CursorAdapter
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        var mapViewBundle: Bundle? = null
+
+        if (savedInstanceState  !== null) {
+            mapViewBundle = savedInstanceState.getBundle(MAPVIEW_BUNDLE_KEY)
+        }
+
+        mapView = findViewById(R.id.mapView)
+        mapView.onCreate(mapViewBundle)
+
 
         // Fetching API_KEY which we wrapped
         val ai: ApplicationInfo = applicationContext.packageManager
@@ -60,16 +81,25 @@ class MapActivity : AppCompatActivity() {
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        mapFragment = supportFragmentManager.findFragmentById(R.id.fragment_map) as? SupportMapFragment
+        locationSearchView = findViewById(R.id.station_search_view)
 
-        mapFragment?.getMapAsync {
-            mMap = it
-            getLastLocation()
-            synchroApi()
-            addMarkers(mMap)
-        }
+        val from = arrayOf(SearchManager.SUGGEST_COLUMN_TEXT_1)
+        val to = intArrayOf(R.id.location_autocomplete)
 
 
+        cursorAdapter = SimpleCursorAdapter(this, R.layout.search_item, null, from, to, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER)
+
+        locationSearchView.suggestionsAdapter = cursorAdapter
+
+        mapView.getMapAsync(this)
+    }
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        getLastLocation()
+        synchroApi()
+        addMarkers(mMap)
+        configureSuggestions(locationSearchView, cursorAdapter)
     }
 
     private fun synchroApi() {
@@ -99,6 +129,10 @@ class MapActivity : AppCompatActivity() {
 
             resultStation.data.stations.map {
                 stations.add(it)
+            }
+
+            resultStation.data.stations.map {
+                stationsTitle.add(it.name)
             }
 
             resultStationDetails.data.stations.map {
@@ -143,9 +177,6 @@ class MapActivity : AppCompatActivity() {
             Log.d(TAG, "synchroApiClickedName: $name")
             val intent = Intent(this, DetailsActivity::class.java)
             intent.putExtras(bundle)
-//            intent.putExtra("name", name)
-//            intent.putExtra("numBikesAvailable", numBikesAvailable)
-//            intent.putExtra("numDocksAvailable", numDocksAvailable)
             startActivity(intent)
             true
         }
@@ -226,19 +257,111 @@ class MapActivity : AppCompatActivity() {
         ActivityCompat.requestPermissions(
             this,
             arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
-            pERMISSION_ID
+            PERMISSION_ID
         )
     }
 
     // What must happen when permission is granted
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == pERMISSION_ID) {
+        if (requestCode == PERMISSION_ID) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 getLastLocation()
             }
         }
     }
 
+    private fun configureSuggestions(searchView: SearchView, cursorAdapter: CursorAdapter) {
 
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                val notCaseSensitiveQuery: String? = query?.lowercase()
+                val stationFound = stations.find {
+                    it.name.lowercase() == notCaseSensitiveQuery
+                }
+                Log.d(TAG, "$stationFound")
+                if (stationFound !== null) {
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        LatLng(stationFound.lat, stationFound.lon), 16F)
+                    )
+                }
+                return false
+            }
+
+
+            override fun onQueryTextChange(query: String?): Boolean {
+
+                val cursor = MatrixCursor(arrayOf(BaseColumns._ID, SearchManager.SUGGEST_COLUMN_TEXT_1))
+
+                query?.let {
+                    stationsTitle.forEachIndexed { index, station ->
+                        if (station.contains(query, true)) {
+                            cursor.addRow(arrayOf(index, station))
+                        }
+                    }
+                }
+                cursorAdapter.changeCursor(cursor)
+                return true
+            }
+
+        })
+
+        searchView.setOnSuggestionListener(object : SearchView.OnSuggestionListener {
+            override fun onSuggestionSelect(position: Int): Boolean {
+                return false
+            }
+
+            @SuppressLint("Range")
+            override fun onSuggestionClick(position: Int): Boolean {
+                val cursor: Cursor = searchView.suggestionsAdapter.getItem(position) as Cursor
+                val selection = cursor.getString(cursor.getColumnIndex(SearchManager.SUGGEST_COLUMN_TEXT_1))
+                searchView.setQuery(selection, true)
+                return true
+
+            }
+
+        })
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        var mapViewBundle: Bundle? = outState.getBundle(MAPVIEW_BUNDLE_KEY)
+        if (mapViewBundle == null) {
+            mapViewBundle = Bundle()
+            outState.putBundle(MAPVIEW_BUNDLE_KEY, mapViewBundle)
+        }
+
+        mapView.onSaveInstanceState(mapViewBundle)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        mapView.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mapView.onResume()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        mapView.onStop()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mapView.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mapView.onDestroy()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        mapView.onLowMemory()
+    }
 }

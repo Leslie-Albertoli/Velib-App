@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
+    android:id="@+id/mapContainer"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,22 +8,19 @@
     android:layout_height="match_parent"
     tools:context=".MapActivity">
 
-
-
-    <fragment
-        class="com.google.android.gms.maps.SupportMapFragment"
-        android:id="@+id/fragment_map"
+    <SearchView
+        android:id="@+id/station_search_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:background="#BFBFBF"
+        android:elevation="5dp"
+        app:iconifiedByDefault="false"
+        app:queryHint="Cherchez une station..." />
 
-<!--        <SearchView-->
-<!--            android:id="@+id/station_search_view"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:iconifiedByDefault="false"-->
-<!--            android:queryHint="Cherchez une station..."-->
-<!--            android:layout_marginTop="8dp" />-->
-
-    </fragment>
+    <com.google.android.gms.maps.MapView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/mapView" />
 
 </FrameLayout>

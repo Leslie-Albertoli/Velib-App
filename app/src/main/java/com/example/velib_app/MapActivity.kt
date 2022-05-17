@@ -167,12 +167,18 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             val name = stationClicked?.name
             val numBikesAvailable = stationDetailsClicked?.numBikesAvailable.toString()
             val numDocksAvailable = stationDetailsClicked?.numDocksAvailable.toString()
+            val capacity = stationClicked?.capacity.toString()
+            val num_bikes_available_types_mechanical = stationDetailsClicked?.num_bikes_available_types?.get(0).toString()
+            val num_bikes_available_types_electrical = stationDetailsClicked?.num_bikes_available_types?.get(1).toString()
 
             val bundle = Bundle()
 
             bundle.putString("name", name)
             bundle.putString("numBikes", numBikesAvailable)
             bundle.putString("numDocks", numDocksAvailable)
+            bundle.putString("capacity", capacity)
+            bundle.putString("num_bikes_available_types_mechanical", num_bikes_available_types_mechanical)
+            bundle.putString("num_bikes_available_types_electrical", num_bikes_available_types_electrical)
 
             Log.d(TAG, "synchroApiClickedName: $name")
             val intent = Intent(this, DetailsActivity::class.java)

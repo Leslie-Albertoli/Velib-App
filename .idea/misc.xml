@@ -3,6 +3,13 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/AAA Leslie/AAA EPF/2021_22 EPF 4A/AAA Cours/Materiel mobile/Code/Projet/VelibApp/app/src/main/res/drawable/ic_baseline_search_24.xml" value="0.1" />
+        <entry key="..\:/AAA Leslie/AAA EPF/2021_22 EPF 4A/AAA Cours/Materiel mobile/Code/Projet/VelibApp/app/src/main/res/drawable/ic_baseline_star_border_24.xml" value="0.1" />
+        <entry key="..\:/AAA Leslie/AAA EPF/2021_22 EPF 4A/AAA Cours/Materiel mobile/Code/Projet/VelibApp/app/src/main/res/drawable/im_details_capacity.xml" value="0.109" />
+        <entry key="..\:/AAA Leslie/AAA EPF/2021_22 EPF 4A/AAA Cours/Materiel mobile/Code/Projet/VelibApp/app/src/main/res/drawable/im_details_nb_bike.xml" value="0.109" />
+        <entry key="..\:/AAA Leslie/AAA EPF/2021_22 EPF 4A/AAA Cours/Materiel mobile/Code/Projet/VelibApp/app/src/main/res/drawable/im_details_nb_place.xml" value="0.109" />
+        <entry key="..\:/AAA Leslie/AAA EPF/2021_22 EPF 4A/AAA Cours/Materiel mobile/Code/Projet/VelibApp/app/src/main/res/layout/activity_details.xml" value="0.20471014492753623" />
+        <entry key="..\:/AAA Leslie/AAA EPF/2021_22 EPF 4A/AAA Cours/Materiel mobile/Code/Projet/VelibApp/app/src/main/res/menu/menu.xml" value="0.25416666666666665" />
         <entry key="..\:/AAA Leslie/AAA EPF/2021_22 EPF 4A/AAA Cours/Materiel mobile/Code/VelibApp/app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="..\:/Users/User/Desktop/MIN-4A/Materiels_Mobiles/Projet/Velib-App/app/src/main/res/drawable/ic_baseline_directions_bike_24.xml" value="0.1" />
         <entry key="..\:/Users/User/Desktop/MIN-4A/Materiels_Mobiles/Projet/Velib-App/app/src/main/res/drawable/ic_launcher_background.xml" value="0.124" />

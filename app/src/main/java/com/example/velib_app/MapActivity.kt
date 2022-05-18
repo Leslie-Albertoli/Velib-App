@@ -164,21 +164,27 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d(TAG, "synchroApiClicked: $stationClicked")
             Log.d(TAG, "synchroApiClickedDetails: $stationDetailsClicked")
 
+            val stationId = stationClicked?.station_id.toString()
             val name = stationClicked?.name
             val numBikesAvailable = stationDetailsClicked?.numBikesAvailable.toString()
             val numDocksAvailable = stationDetailsClicked?.numDocksAvailable.toString()
             val capacity = stationClicked?.capacity.toString()
-            val num_bikes_available_types_mechanical = stationDetailsClicked?.num_bikes_available_types?.get(0).toString()
-            val num_bikes_available_types_electrical = stationDetailsClicked?.num_bikes_available_types?.get(1).toString()
+            val numBikesAvailableTypesMechanical = stationDetailsClicked?.num_bikes_available_types?.get(0)
+                ?.get("mechanical")
+                .toString()
+            val numBikesAvailableTypesElectrical = stationDetailsClicked?.num_bikes_available_types?.get(1)
+                ?.get("ebike")
+                .toString()
 
             val bundle = Bundle()
 
+            bundle.putString("stationId", stationId)
             bundle.putString("name", name)
             bundle.putString("numBikes", numBikesAvailable)
             bundle.putString("numDocks", numDocksAvailable)
             bundle.putString("capacity", capacity)
-            bundle.putString("num_bikes_available_types_mechanical", num_bikes_available_types_mechanical)
-            bundle.putString("num_bikes_available_types_electrical", num_bikes_available_types_electrical)
+            bundle.putString("numBikesAvailableTypesMechanical", numBikesAvailableTypesMechanical)
+            bundle.putString("numBikesAvailableTypesElectrical", numBikesAvailableTypesElectrical)
 
             Log.d(TAG, "synchroApiClickedName: $name")
             val intent = Intent(this, DetailsActivity::class.java)

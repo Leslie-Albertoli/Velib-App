@@ -6,10 +6,10 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.room.Room
 import com.example.velib_app.bdd.FavorisDao
 import com.example.velib_app.bdd.FavorisDatabase
 import com.example.velib_app.bdd.FavorisEntity
+import kotlinx.coroutines.runBlocking
 
 private const val TAG = "DetailsActivity"
 
@@ -25,16 +25,13 @@ btn_star_big_off
 
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
-    var bddFavoris: FavorisDatabase? = null
-    var FavorisDao: FavorisDao? = null
+    //var bddFavoris: FavorisDatabase? = null
+    //var FavorisDao: FavorisDao? = null
     /*val bddFavoris = FavorisDatabase.createDatabase(this)
     val FavorisDao = bddFavoris.favorisDao()*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        bddFavoris = FavorisDatabase.createDatabase(this)
-        FavorisDao = bddFavoris?.favorisDao()
 
         setContentView(R.layout.activity_details)
 
@@ -72,18 +69,23 @@ class DetailsActivity : AppCompatActivity() {
         super.onOptionsItemSelected(item)
         when (item?.itemId) {
             R.id.item_favoris -> {
-                if (isFavoris() == false) {
+                val bddFavoris = FavorisDatabase.createDatabase(this)
+                val favorisDao = bddFavoris.favorisDao()
+
+                if (!isFavoris(favorisDao)) { //==false
                     item.setIcon(R.drawable.im_favoris_star_on)
-                    Toast.makeText(this, "Favoris", Toast.LENGTH_LONG).show()
+                    insertFavoris(favorisDao)
+                    Toast.makeText(this, "Favoris ajouté", Toast.LENGTH_LONG).show()
                     //isFavoris = true
                     //=> insert id dans la bdd des favoris
-                    //insertFavoris()
                 } else {
                     item.setIcon(R.drawable.im_favoris_star_off)
+                    deleteFavoris(favorisDao)
+                    Toast.makeText(this, "Favoris supprimé", Toast.LENGTH_LONG).show()
                     //isFavoris = false
                     //=> delete id dans la bdd des favoris
-                    //deleteFavoris()
                 }
+                bddFavoris.close()
             }
             else -> {
                 Toast.makeText(this, "Action inconnu", Toast.LENGTH_LONG).show()
@@ -92,24 +94,28 @@ class DetailsActivity : AppCompatActivity() {
         return true
     }
 
-    fun isFavoris (): Boolean {
-        var isFavoris: Boolean = true
-        val findByStationIdFavoris: FavorisEntity? = FavorisDao?.findByStationId(stationIdThis)
-        if (findByStationIdFavoris == null) {isFavoris = false}
-
-        //Log.d(TAG, "findByStationIdFavoris: $findByStationIdFavoris")
+    fun isFavoris(favorisDao: FavorisDao): Boolean {
+        var isFavoris = false
+        runBlocking {
+            val findByStationIdFavoris: FavorisEntity = favorisDao.findByStationId(stationIdThis)
+            isFavoris = findByStationIdFavoris != null
+        }
         Log.d(TAG, "isFavoris: $isFavoris")
         return isFavoris
     }
 
-    fun insertFavoris () {
+    fun insertFavoris(favorisDao: FavorisDao) {
         val stationIdLongFavorisEntity: FavorisEntity = FavorisEntity(stationIdThis)
-        FavorisDao?.insertAll(stationIdLongFavorisEntity)
+        runBlocking {
+            favorisDao.insert(stationIdLongFavorisEntity)
+        }
     }
 
-    fun deleteFavoris () {
+    fun deleteFavoris(favorisDao: FavorisDao) {
         val stationIdLongFavorisEntity: FavorisEntity = FavorisEntity(stationIdThis)
-        FavorisDao?.delete(stationIdLongFavorisEntity)
+        runBlocking {
+            favorisDao.delete(stationIdLongFavorisEntity)
+        }
     }
 
     /*val bundle = intent.extras

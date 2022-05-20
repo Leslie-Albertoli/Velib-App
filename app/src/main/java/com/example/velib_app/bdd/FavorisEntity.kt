@@ -10,5 +10,5 @@ data class FavorisEntity(
     /*@PrimaryKey(autoGenerate = true)
     private int key;*/
 
-    @PrimaryKey@ColumnInfo(name = "station_id") val station_id: Long?
+    @PrimaryKey @ColumnInfo(name = "station_id") val station_id: Long
 )

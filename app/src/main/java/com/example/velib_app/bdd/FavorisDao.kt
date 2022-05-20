@@ -8,14 +8,14 @@ import androidx.room.Query
 @Dao
 interface FavorisDao {
     @Query("SELECT * FROM favoris")
-    fun getAll(): List<FavorisEntity>
+    suspend fun getAll(): List<FavorisEntity>
 
-    @Query("SELECT * FROM favoris WHERE station_id LIKE :station_id_var")
-    fun findByStationId(station_id_var: Long): FavorisEntity
+    @Query("SELECT * FROM favoris WHERE station_id == :station_id_var")
+    suspend fun findByStationId(station_id_var: Long): FavorisEntity
 
     @Insert
-    fun insertAll(vararg favoris: FavorisEntity)
+    suspend fun insert(vararg favoris: FavorisEntity)
 
     @Delete
-    fun delete(favoris: FavorisEntity)
+    suspend fun delete(favoris: FavorisEntity)
 }

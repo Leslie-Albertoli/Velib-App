@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    android:id="@+id/mapContainer"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MapActivity">
+
+    <SearchView
+        android:id="@+id/station_search_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:background="#BFBFBF"
+        android:elevation="5dp"
+        android:iconifiedByDefault="false"
+        android:queryHint="Cherchez une station..." />
+
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:ignore="SpeakableTextPresentCheck" />
+
+    <ImageButton
+        android:id="@+id/synchro_api_image_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="27dp"
+        android:layout_marginBottom="110dp"
+        android:background="@drawable/map_button_bg"
+        android:contentDescription="@string/map_api_button"
+        android:elevation="20dp"
+        android:src="@drawable/ic_baseline_sync_24" />
+
+    <ImageButton
+        android:id="@+id/location_image_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="26dp"
+        android:layout_marginBottom="30dp"
+        android:background="@drawable/map_button_bg"
+        android:src="@drawable/ic_baseline_my_location_24"
+        android:contentDescription="@string/map_location_button" />
+
+</FrameLayout>

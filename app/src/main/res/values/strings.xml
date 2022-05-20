@@ -8,4 +8,7 @@
     <string name="details_docks_picture_description">number_bikes_picture</string>
     <string name="details_title_nb_mechanical"><![CDATA[-> Type mechanique :]]></string>
     <string name="details_title_nb_electrical"><![CDATA[-> Type electrique :]]></string>
+    <string name="map_location_button">Location</string>
+    <string name="map_api_button">Reload map data</string>
+    <string name="splash_screen_image_description">image of a bike</string>
 </resources>

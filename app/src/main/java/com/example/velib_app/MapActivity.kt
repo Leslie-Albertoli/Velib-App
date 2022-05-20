@@ -24,10 +24,9 @@ import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
+import com.google.maps.android.clustering.ClusterManager
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -54,9 +53,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setTheme(R.style.Theme_VelibApp)
+        setContentView(R.layout.activity_map)
 
         var mapViewBundle: Bundle? = null
 
@@ -91,14 +92,34 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         locationSearchView.suggestionsAdapter = cursorAdapter
 
+        val locationImageButton = findViewById<ImageButton>(R.id.location_image_button)
+
+        val syncImageButton = findViewById<ImageButton>(R.id.synchro_api_image_button)
+
+        locationImageButton.setOnClickListener {
+            getLastLocation()
+        }
+
         mapView.getMapAsync(this)
+        mapView.getMapAsync {
+            mMap = it
+            addClusteredMarkers(mMap)
+        }
+
+
+
+        syncImageButton.setOnClickListener {
+            synchroApi()
+            addClusteredMarkers(mMap)
+            configureSuggestions(locationSearchView, cursorAdapter)
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         getLastLocation()
         synchroApi()
-        addMarkers(mMap)
+
         configureSuggestions(locationSearchView, cursorAdapter)
     }
 
@@ -141,22 +162,21 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun addMarkers(googleMap: GoogleMap) {
-        stations.forEach { station ->
-            val (_ , name, latitude, longitude) = station
-            val velibCoordinate = LatLng(latitude, longitude)
+    private fun addClusteredMarkers(googleMap: GoogleMap) {
 
-            googleMap.addMarker(
-                MarkerOptions()
-                .position(velibCoordinate)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN + 21)) // hue = 141.0 activity?.let { bitmapDescriptorFromVector(it, R.drawable.ic_baseline_directions_bike_24) }
-                .title(name))
+        val clusterManager: ClusterManager<Station> = ClusterManager<Station>(this, googleMap)
+        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager)
 
+        clusterManager.addItems(stations)
+        clusterManager.cluster()
+
+        googleMap.setOnCameraIdleListener {
+            clusterManager.onCameraIdle()
         }
 
-        googleMap.setOnMarkerClickListener {
-            /*val stationClicked = stations.find { station ->
-                it.title.equals(station.name)
+        clusterManager.setOnClusterItemClickListener {
+            val stationClicked = stations.find { station ->
+                it.title == station.name
             }
             val stationDetailsClicked = stationDetails.find {
                 it.station_id == stationClicked?.station_id
@@ -203,6 +223,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     private fun getLastLocation() {
         if (checkPermissions()) {
+            mMap.isMyLocationEnabled = true
             if (isLocationEnabled()) {
                 if (!this::mFusedLocationClient.isInitialized) {
                     requestNewLocationData()
@@ -213,7 +234,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                             requestNewLocationData()
                         } else {
                             currentLocation = LatLng(location.latitude, location.longitude)
-                            mMap.addMarker(MarkerOptions().position(currentLocation))
+//                            mMap.addMarker(MarkerOptions().position(currentLocation))
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 16F))
                         }
                     }
@@ -331,11 +352,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
             @SuppressLint("Range")
             override fun onSuggestionClick(position: Int): Boolean {
+
                 val cursor: Cursor = searchView.suggestionsAdapter.getItem(position) as Cursor
                 val selection = cursor.getString(cursor.getColumnIndex(SearchManager.SUGGEST_COLUMN_TEXT_1))
                 searchView.setQuery(selection, true)
                 return true
-
             }
 
         })

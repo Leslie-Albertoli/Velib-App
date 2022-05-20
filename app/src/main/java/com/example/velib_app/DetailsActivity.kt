@@ -16,7 +16,7 @@ private const val TAG = "DetailsActivity"
 /*
 bouton retour https://fr.acervolima.com/comment-ajouter-et-personnaliser-le-bouton-retour-de-la-barre-d-action-dans-android/
 favoris
-astuce : ctrl + alt + L pour réaligner tout le code ==> Merci !
+astuce : ctrl + alt + L pour réaligner tout le code
 
 Log.d(TAG, "numDocks: $numDocksAvailable")
 
@@ -62,6 +62,16 @@ class DetailsActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
         menuInflater.inflate(R.menu.menu, menu)
+
+        val bddFavoris = FavorisDatabase.createDatabase(this)
+        val favorisDao = bddFavoris.favorisDao()
+        if (isFavoris(favorisDao)) { //==false
+            menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
+        } else {
+            menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_off)
+        }
+        bddFavoris.close()
+
         return true
     }
 
@@ -71,20 +81,23 @@ class DetailsActivity : AppCompatActivity() {
             R.id.item_favoris -> {
                 val bddFavoris = FavorisDatabase.createDatabase(this)
                 val favorisDao = bddFavoris.favorisDao()
-
+                /*runBlocking {
+                    val getAll: List<FavorisEntity> = favorisDao.getAll()
+                    Log.d(TAG, "1-----------------: $getAll")
+                }*/
                 if (!isFavoris(favorisDao)) { //==false
                     item.setIcon(R.drawable.im_favoris_star_on)
                     insertFavoris(favorisDao)
                     Toast.makeText(this, "Favoris ajouté", Toast.LENGTH_LONG).show()
-                    //isFavoris = true
-                    //=> insert id dans la bdd des favoris
                 } else {
                     item.setIcon(R.drawable.im_favoris_star_off)
                     deleteFavoris(favorisDao)
                     Toast.makeText(this, "Favoris supprimé", Toast.LENGTH_LONG).show()
-                    //isFavoris = false
-                    //=> delete id dans la bdd des favoris
                 }
+                /*runBlocking {
+                    val getAll: List<FavorisEntity> = favorisDao.getAll()
+                    Log.d(TAG, "2-----------------: $getAll")
+                }*/
                 bddFavoris.close()
             }
             else -> {

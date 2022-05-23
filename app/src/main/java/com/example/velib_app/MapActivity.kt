@@ -155,7 +155,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         googleMap.setOnMarkerClickListener {
-            val stationClicked = stations.find { station ->
+            /*val stationClicked = stations.find { station ->
                 it.title.equals(station.name)
             }
             val stationDetailsClicked = stationDetails.find {
@@ -190,7 +190,13 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             val intent = Intent(this, DetailsActivity::class.java)
             intent.putExtras(bundle)
             startActivity(intent)
+            true*/
+
+
+            val intent = Intent(this, FavorisActivity::class.java)
+            startActivity(intent)
             true
+
         }
     }
 

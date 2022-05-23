@@ -10,6 +10,9 @@ interface FavorisDao {
     @Query("SELECT * FROM favoris")
     suspend fun getAll(): List<FavorisEntity>
 
+    @Query("SELECT station_id FROM favoris")
+    suspend fun getAllId(): List<Long>
+
     @Query("SELECT * FROM favoris WHERE station_id == :station_id_var")
     suspend fun findByStationId(station_id_var: Long): FavorisEntity
 

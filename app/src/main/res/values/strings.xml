@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">Velib-App</string>
     <string name="api_key">AIzaSyDME_xIWig2edHHrUODZ09y6xwNzemdg9A</string>
+    <string name="details_title_nb_bike">Nombre de vélos disponible :</string>
+    <string name="details_title_nb_place">Nombre de places disponibles :</string>
+    <string name="details_title_capacity">Capcité de la station :</string>
+    <string name="details_bikes_picture_description">number_bikes_picture</string>
+    <string name="details_docks_picture_description">number_bikes_picture</string>
+    <string name="details_title_nb_mechanical"><![CDATA[-> Type mechanique :]]></string>
+    <string name="details_title_nb_electrical"><![CDATA[-> Type electrique :]]></string>
 </resources>

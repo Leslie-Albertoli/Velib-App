@@ -120,7 +120,6 @@ class DetailsActivity : AppCompatActivity() {
             val findByStationIdFavoris: FavorisEntity = favorisDao.findByStationId(stationIdThis)
             isFavoris = findByStationIdFavoris != null
         }
-        Log.d(TAG, "isFavoris: $isFavoris")
         return isFavoris
     }
 

@@ -1,7 +1,7 @@
 package com.example.velib_app
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
@@ -26,6 +26,7 @@ else -> {
     Toast.makeText(this, "Action inconnu", Toast.LENGTH_LONG).show()
 }
 */
+//accès à la liste des favoris depuis l'écran details favoris
 
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
@@ -81,13 +82,30 @@ class DetailsActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         super.onOptionsItemSelected(item)
+
         when (item.itemId) {
             android.R.id.home -> {
-                finish()
+                val bddFavoris = FavorisDatabase.createDatabase(this)
+                val favorisDao = bddFavoris.favorisDao()
+                if (isFavoris(favorisDao)) {
+                    finish()
+                } else {
+                    val intent = Intent(this, MapActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    startActivity(intent)
+                }
             }
         }
 
         when (item?.itemId) {
+            /*R.id.item_liste_favoris -> {
+                val bundle = Bundle()
+                val intent = Intent(this, FavorisActivity::class.java)
+                bundle.putParcelableArrayList("stationList", ArrayList(stations))
+                bundle.putParcelableArrayList("stationDetails", ArrayList(stationDetails))
+                intent.putExtras(bundle)
+                startActivity(intent)
+            }*/
             R.id.item_favoris -> {
                 val bddFavoris = FavorisDatabase.createDatabase(this)
                 val favorisDao = bddFavoris.favorisDao()
@@ -103,6 +121,12 @@ class DetailsActivity : AppCompatActivity() {
                     item.setIcon(R.drawable.im_favoris_star_off)
                     deleteFavoris(favorisDao)
                     Toast.makeText(this, "Favoris supprimé", Toast.LENGTH_LONG).show()
+
+
+                    //LoaderManager.getInstance(this).initLoader(0,null,mRecipeLoaderManager);
+                    /*supportLoaderManager.initLoader(1, null, this)
+                    adapter = Mainrow_Adapter(this, null)
+                    recyclerView.setAdapter(adapter)*/
                 }
                 /*runBlocking {
                     val getAll: List<FavorisEntity> = favorisDao.getAll()

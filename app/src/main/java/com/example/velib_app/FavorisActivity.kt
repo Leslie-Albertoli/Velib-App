@@ -50,7 +50,6 @@ class FavorisActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
-        menuInflater.inflate(R.menu.menu, menu)
 
         val actionBar: ActionBar? = supportActionBar
         actionBar?.setHomeAsUpIndicator(R.drawable.im_arrow_back);

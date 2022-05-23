@@ -3,14 +3,19 @@ package com.example.velib_app
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.example.velib_app.model.Station
+import com.example.velib_app.model.StationDetails
 
-class FavorisAdapter(val favorisList: List<Long>) :
+private const val TAG = "FavorisAdapter"
+
+class FavorisAdapter(val favorisList: List<Long>, val stationList: MutableList<Station>, val stationDetails: MutableList<StationDetails>) :
     RecyclerView.Adapter<FavorisAdapter.FavorisViewHolder>() {
 
     class FavorisViewHolder(val view: View) : RecyclerView.ViewHolder(view)
@@ -24,57 +29,65 @@ class FavorisAdapter(val favorisList: List<Long>) :
     override fun onBindViewHolder(holder: FavorisViewHolder, position: Int) {
         val favoris = favorisList[position] //kotlin list ~ tableau
 
-        /*holder.view.setOnClickListener {
+        val clientTextview =
+            holder.view.findViewById<TextView>(R.id.adapter_station_name_textview)
+        val stationFavoris = stationList.find {
+            it.station_id.equals(favoris)
+        }
+        val stationFavorisDetails = stationDetails.find{
+            it.station_id.equals(favoris)
+        }
+        clientTextview.text = "${stationFavoris?.name}"
+        //clientTextview.text = "${favoris.firstname} ${client.lastname}"
+
+        /*val clientImageview =
+            holder.view.findViewById<ImageView>(R.id.adapter_client_imageview)
+        clientImageview.setClient(client)*/
+
+
+        holder.view.setOnClickListener {
+            val stationId = stationFavoris?.station_id.toString()
+            val name = stationFavoris?.name
+            val numBikesAvailable = stationFavorisDetails?.numBikesAvailable.toString()
+            val numDocksAvailable = stationFavorisDetails?.numDocksAvailable.toString()
+            val capacity = stationFavoris?.capacity.toString()
+            Log.d(TAG, "stationFavorisDetails: $stationFavorisDetails")
+            /*val numBikesAvailableTypesMechanical = stationFavorisDetails?.num_bikes_available_types?.get(0)
+                ?.get("mechanical")
+                .toString()
+            val numBikesAvailableTypesElectrical = stationFavorisDetails?.num_bikes_available_types?.get(1)
+                ?.get("ebike")
+                .toString()*/
+
             val context = it.context
-            val intent = Intent(context, DetailsClientActivity::class.java)
-            intent.putExtra("client_id", position)
-            context.startActivity(intent)
-        }*/
+            val intent = Intent(context, DetailsActivity::class.java)
 
-        /*holder.view.setOnClickListener {
-            /*val context = it.context
-            val intent = Intent(context, DetailsClientActivity::class.java)
-            intent.putExtra("client_id", position)
-            context.startActivity(intent)*/
-
-            val stationId = "a"
-            val name = "a"
-            val numBikesAvailable = "1"
-            val numDocksAvailable = "1"
-            val capacity = "2"
-            val numBikesAvailableTypesMechanical = "1"
-            val numBikesAvailableTypesElectrical = "0"
-
-            val bundle = Bundle()
-
+            intent.putExtra("stationId", stationId)
+            intent.putExtra("name", name)
+            intent.putExtra("numBikes", numBikesAvailable)
+            intent.putExtra("numDocks", numDocksAvailable)
+            intent.putExtra("capacity", capacity)
+            //intent.putExtra("numBikesAvailableTypesMechanical", numBikesAvailableTypesMechanical)
+            //intent.putExtra("numBikesAvailableTypesElectrical", numBikesAvailableTypesElectrical)
+            /*val bundle = Bundle()
             bundle.putString("stationId", stationId)
             bundle.putString("name", name)
             bundle.putString("numBikes", numBikesAvailable)
             bundle.putString("numDocks", numDocksAvailable)
             bundle.putString("capacity", capacity)
             bundle.putString("numBikesAvailableTypesMechanical", numBikesAvailableTypesMechanical)
-            bundle.putString("numBikesAvailableTypesElectrical", numBikesAvailableTypesElectrical)
+            bundle.putString("numBikesAvailableTypesElectrical", numBikesAvailableTypesElectrical)*/
 
-            /*val intent = Intent(holder.itemView.context, DetailsActivity::class.java)
-            intent.putExtras(bundle)
-            holder.itemView.context.startActivity(intent)
-            true*/
-            val context = it.context
-            val intent = Intent(context, DetailsActivity::class.java)
-            intent.putExtras(bundle)
             context.startActivity(intent)
-            true
+        }
+
+        /*holder.view.setOnClickListener {
+            val context = it.context
+            val intent = Intent(context, DetailsClientActivity::class.java)
+            intent.putExtra("client_id", position)
+            context.startActivity(intent)
         }*/
 
-        val clientTextview =
-            holder.view.findViewById<TextView>(R.id.adapter_station_name_textview)
-
-        clientTextview.text = "${favoris}"
-        //clientTextview.text = "${favoris.firstname} ${client.lastname}"
-
-        /*val clientImageview =
-            holder.view.findViewById<ImageView>(R.id.adapter_client_imageview)
-        clientImageview.setClient(client)*/
 
     }
 

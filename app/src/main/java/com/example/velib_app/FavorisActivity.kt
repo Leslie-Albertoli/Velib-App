@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.velib_app.bdd.FavorisDao
 import com.example.velib_app.bdd.FavorisDatabase
 import com.example.velib_app.bdd.FavorisEntity
+import com.example.velib_app.model.Station
+import com.example.velib_app.model.StationDetails
 import kotlinx.coroutines.runBlocking
 
 class FavorisActivity : AppCompatActivity() {
@@ -33,7 +35,15 @@ class FavorisActivity : AppCompatActivity() {
         val favorisDao = bddFavoris.favorisDao()
         runBlocking {
             val getAllId: List<Long> = favorisDao.getAllId()
-            val favorisAdapter = FavorisAdapter(getAllId)
+            val bundle = intent.extras
+            var favorisAdapter: FavorisAdapter? = null
+            if (bundle !== null) {
+                favorisAdapter = FavorisAdapter(
+                    getAllId,
+                    bundle.get("stationList") as MutableList<Station>,
+                    bundle.get("stationDetails") as MutableList<StationDetails>
+                )
+            }
             recyclerView.adapter = favorisAdapter
         }
     }

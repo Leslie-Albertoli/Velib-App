@@ -4,31 +4,31 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.*
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import com.example.velib_app.bdd.FavorisDao
 import com.example.velib_app.bdd.FavorisDatabase
 import com.example.velib_app.bdd.FavorisEntity
 import kotlinx.coroutines.runBlocking
 
+
 private const val TAG = "DetailsActivity"
 
 /*
-bouton retour https://fr.acervolima.com/comment-ajouter-et-personnaliser-le-bouton-retour-de-la-barre-d-action-dans-android/
-favoris
 astuce : ctrl + alt + L pour réaligner tout le code
 
 Log.d(TAG, "numDocks: $numDocksAvailable")
 
 btn_star_big_off
+else -> {
+    Toast.makeText(this, "Action inconnu", Toast.LENGTH_LONG).show()
+}
 */
 
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
-    //var bddFavoris: FavorisDatabase? = null
-    //var FavorisDao: FavorisDao? = null
-    /*val bddFavoris = FavorisDatabase.createDatabase(this)
-    val FavorisDao = bddFavoris.favorisDao()*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +63,10 @@ class DetailsActivity : AppCompatActivity() {
         super.onCreateOptionsMenu(menu)
         menuInflater.inflate(R.menu.menu, menu)
 
+        val actionBar: ActionBar? = supportActionBar
+        actionBar?.setHomeAsUpIndicator(R.drawable.im_arrow_back);
+        actionBar?.setDisplayHomeAsUpEnabled(true);
+
         val bddFavoris = FavorisDatabase.createDatabase(this)
         val favorisDao = bddFavoris.favorisDao()
         if (isFavoris(favorisDao)) { //==false
@@ -77,6 +81,12 @@ class DetailsActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         super.onOptionsItemSelected(item)
+        when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+            }
+        }
+
         when (item?.itemId) {
             R.id.item_favoris -> {
                 val bddFavoris = FavorisDatabase.createDatabase(this)
@@ -99,9 +109,6 @@ class DetailsActivity : AppCompatActivity() {
                     Log.d(TAG, "2-----------------: $getAll")
                 }*/
                 bddFavoris.close()
-            }
-            else -> {
-                Toast.makeText(this, "Action inconnu", Toast.LENGTH_LONG).show()
             }
         }
         return true
@@ -130,13 +137,4 @@ class DetailsActivity : AppCompatActivity() {
             favorisDao.delete(stationIdLongFavorisEntity)
         }
     }
-
-    /*val bundle = intent.extras
-        val stationIdLongFavorisEntity: FavorisEntity = FavorisEntity(stationIdLong)
-        val getAllFavoris: List<FavorisEntity> = FavorisDao.getAll()
-        val findByStationIdFavoris: FavorisEntity = FavorisDao.findByStationId(stationIdLong)
-        val insertAllFavoris: Unit = FavorisDao.insertAll(stationIdLongFavorisEntity)
-        val deleteFavoris: Unit = FavorisDao.delete(stationIdLongFavorisEntity)
-    */
-
 }

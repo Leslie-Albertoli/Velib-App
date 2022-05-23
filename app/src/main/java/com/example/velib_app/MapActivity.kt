@@ -110,8 +110,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         syncImageButton.setOnClickListener {
             synchroApi()
-            addClusteredMarkers(mMap)
-            configureSuggestions(locationSearchView, cursorAdapter)
         }
     }
 
@@ -119,7 +117,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
         getLastLocation()
         synchroApi()
-
         configureSuggestions(locationSearchView, cursorAdapter)
     }
 
@@ -314,6 +311,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
                 val notCaseSensitiveQuery: String? = query?.lowercase()
                 val stationFound = stations.find {
                     it.name.lowercase() == notCaseSensitiveQuery

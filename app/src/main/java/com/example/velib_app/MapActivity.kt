@@ -16,18 +16,21 @@ import android.os.Looper
 import android.provider.BaseColumns
 import android.provider.Settings
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.*
+import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.velib_app.api.StationService
+import com.example.velib_app.bdd.FavorisDatabase
 import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
+import com.google.maps.android.clustering.ClusterManager
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -40,7 +43,7 @@ private const val MAPVIEW_BUNDLE_KEY: String = "MapViewBundleKey"
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
-    private val stations: MutableList<Station> = mutableListOf()
+    private val stations: MutableList<Station> = arrayListOf()
     private val stationsTitle: MutableList<String> = mutableListOf()
     private val stationDetails: MutableList<StationDetails> = mutableListOf()
     private var currentLocation: LatLng = LatLng(48.78896362751979, 2.3272018540134964)
@@ -52,15 +55,15 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var cursorAdapter: CursorAdapter
 
 
-
-
+    @SuppressLint("UseCompatLoadingForDrawables")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setTheme(R.style.Theme_VelibApp)
+        setContentView(R.layout.activity_map)
 
         var mapViewBundle: Bundle? = null
 
-        if (savedInstanceState  !== null) {
+        if (savedInstanceState !== null) {
             mapViewBundle = savedInstanceState.getBundle(MAPVIEW_BUNDLE_KEY)
         }
 
@@ -87,18 +90,42 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val to = intArrayOf(R.id.location_autocomplete)
 
 
-        cursorAdapter = SimpleCursorAdapter(this, R.layout.search_item, null, from, to, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER)
+        cursorAdapter = SimpleCursorAdapter(
+            this,
+            R.layout.search_item,
+            null,
+            from,
+            to,
+            CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER
+        )
 
         locationSearchView.suggestionsAdapter = cursorAdapter
 
+        val locationImageButton = findViewById<ImageButton>(R.id.location_image_button)
+
+        val syncImageButton = findViewById<ImageButton>(R.id.synchro_api_image_button)
+
+        locationImageButton.setOnClickListener {
+            getLastLocation()
+        }
+
         mapView.getMapAsync(this)
+        mapView.getMapAsync {
+            mMap = it
+            addClusteredMarkers(mMap)
+        }
+
+
+
+        syncImageButton.setOnClickListener {
+            synchroApi()
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         getLastLocation()
         synchroApi()
-        addMarkers(mMap)
         configureSuggestions(locationSearchView, cursorAdapter)
     }
 
@@ -141,22 +168,21 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun addMarkers(googleMap: GoogleMap) {
-        stations.forEach { station ->
-            val (_ , name, latitude, longitude) = station
-            val velibCoordinate = LatLng(latitude, longitude)
+    private fun addClusteredMarkers(googleMap: GoogleMap) {
 
-            googleMap.addMarker(
-                MarkerOptions()
-                .position(velibCoordinate)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN + 21)) // hue = 141.0 activity?.let { bitmapDescriptorFromVector(it, R.drawable.ic_baseline_directions_bike_24) }
-                .title(name))
+        val clusterManager: ClusterManager<Station> = ClusterManager<Station>(this, googleMap)
+        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager)
 
+        clusterManager.addItems(stations)
+        clusterManager.cluster()
+
+        googleMap.setOnCameraIdleListener {
+            clusterManager.onCameraIdle()
         }
 
-        googleMap.setOnMarkerClickListener {
-            /*val stationClicked = stations.find { station ->
-                it.title.equals(station.name)
+        clusterManager.setOnClusterItemClickListener {
+            val stationClicked = stations.find { station ->
+                it.title == station.name
             }
             val stationDetailsClicked = stationDetails.find {
                 it.station_id == stationClicked?.station_id
@@ -169,12 +195,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             val numBikesAvailable = stationDetailsClicked?.numBikesAvailable.toString()
             val numDocksAvailable = stationDetailsClicked?.numDocksAvailable.toString()
             val capacity = stationClicked?.capacity.toString()
-            val numBikesAvailableTypesMechanical = stationDetailsClicked?.num_bikes_available_types?.get(0)
-                ?.get("mechanical")
-                .toString()
-            val numBikesAvailableTypesElectrical = stationDetailsClicked?.num_bikes_available_types?.get(1)
-                ?.get("ebike")
-                .toString()
+            val numBikesAvailableTypesMechanical =
+                stationDetailsClicked?.num_bikes_available_types?.get(0)
+                    ?.get("mechanical")
+                    .toString()
+            val numBikesAvailableTypesElectrical =
+                stationDetailsClicked?.num_bikes_available_types?.get(1)
+                    ?.get("ebike")
+                    .toString()
 
             val bundle = Bundle()
 
@@ -190,19 +218,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             val intent = Intent(this, DetailsActivity::class.java)
             intent.putExtras(bundle)
             startActivity(intent)
-            true*/
-
-
-            val intent = Intent(this, FavorisActivity::class.java)
-            startActivity(intent)
             true
-
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun getLastLocation() {
         if (checkPermissions()) {
+            mMap.isMyLocationEnabled = true
             if (isLocationEnabled()) {
                 if (!this::mFusedLocationClient.isInitialized) {
                     requestNewLocationData()
@@ -213,8 +236,13 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                             requestNewLocationData()
                         } else {
                             currentLocation = LatLng(location.latitude, location.longitude)
-                            mMap.addMarker(MarkerOptions().position(currentLocation))
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 16F))
+//                            mMap.addMarker(MarkerOptions().position(currentLocation))
+                            mMap.animateCamera(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    currentLocation,
+                                    16F
+                                )
+                            )
                         }
                     }
                 }
@@ -253,7 +281,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // function to check if GPS is on
     private fun isLocationEnabled(): Boolean {
-        val locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationManager: LocationManager =
+            getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
             LocationManager.NETWORK_PROVIDER
         )
@@ -262,8 +291,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     // Check if location permissions are
     // granted to the application
     private fun checkPermissions(): Boolean {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
         ) {
             return true
         }
@@ -274,13 +309,20 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun requestPermissions() {
         ActivityCompat.requestPermissions(
             this,
-            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
+            arrayOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ),
             PERMISSION_ID
         )
     }
 
     // What must happen when permission is granted
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_ID) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
@@ -293,14 +335,17 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
                 val notCaseSensitiveQuery: String? = query?.lowercase()
                 val stationFound = stations.find {
                     it.name.lowercase() == notCaseSensitiveQuery
                 }
                 Log.d(TAG, "$stationFound")
                 if (stationFound !== null) {
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                        LatLng(stationFound.lat, stationFound.lon), 16F)
+                    mMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(stationFound.lat, stationFound.lon), 16F
+                        )
                     )
                 }
                 return false
@@ -309,7 +354,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
             override fun onQueryTextChange(query: String?): Boolean {
 
-                val cursor = MatrixCursor(arrayOf(BaseColumns._ID, SearchManager.SUGGEST_COLUMN_TEXT_1))
+                val cursor =
+                    MatrixCursor(arrayOf(BaseColumns._ID, SearchManager.SUGGEST_COLUMN_TEXT_1))
 
                 query?.let {
                     stationsTitle.forEachIndexed { index, station ->
@@ -331,11 +377,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
             @SuppressLint("Range")
             override fun onSuggestionClick(position: Int): Boolean {
+
                 val cursor: Cursor = searchView.suggestionsAdapter.getItem(position) as Cursor
-                val selection = cursor.getString(cursor.getColumnIndex(SearchManager.SUGGEST_COLUMN_TEXT_1))
+                val selection =
+                    cursor.getString(cursor.getColumnIndex(SearchManager.SUGGEST_COLUMN_TEXT_1))
                 searchView.setQuery(selection, true)
                 return true
-
             }
 
         })
@@ -381,5 +428,25 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onLowMemory() {
         super.onLowMemory()
         mapView.onLowMemory()
+    }
+
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        super.onCreateOptionsMenu(menu)
+        menuInflater.inflate(R.menu.menu, menu)
+        //menu?.findItem(R.id.item_liste_favoris)?.setVisible(false) //.setIcon(R.drawable.im_favoris_star_on)
+        menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        super.onOptionsItemSelected(item)
+        val bundle = Bundle()
+        val intent = Intent(this, FavorisActivity::class.java)
+        bundle.putParcelableArrayList("stationList", ArrayList(stations))
+        bundle.putParcelableArrayList("stationDetails", ArrayList(stationDetails))
+        intent.putExtras(bundle)
+        startActivity(intent)
+        return true
     }
 }

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content">
 
         <ImageView
-            android:id="@+id/adapter_client_imageview"
+            android:id="@+id/adapter_favoris_imageview"
             android:src="@drawable/im_favoris_star_on"
             android:layout_width="30dp"
             android:layout_height="30dp"

@@ -98,14 +98,19 @@ class DetailsActivity : AppCompatActivity() {
         }
 
         when (item?.itemId) {
-            /*R.id.item_liste_favoris -> {
-                val bundle = Bundle()
+            R.id.item_liste_favoris -> {
+                //val bundle = Bundle()
+                //////val intent = Intent(this, FavorisActivity::class.java)
+                //bundle.putParcelableArrayList("stationList", ArrayList(stations))
+                //bundle.putParcelableArrayList("stationDetails", ArrayList(stationDetails))
+                //intent.putExtras(bundle)
+                //////startActivity(intent)
+
+
                 val intent = Intent(this, FavorisActivity::class.java)
-                bundle.putParcelableArrayList("stationList", ArrayList(stations))
-                bundle.putParcelableArrayList("stationDetails", ArrayList(stationDetails))
-                intent.putExtras(bundle)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 startActivity(intent)
-            }*/
+            }
             R.id.item_favoris -> {
                 val bddFavoris = FavorisDatabase.createDatabase(this)
                 val favorisDao = bddFavoris.favorisDao()

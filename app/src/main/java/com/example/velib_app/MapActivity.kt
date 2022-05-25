@@ -19,11 +19,10 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
-import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.velib_app.api.StationService
-import com.example.velib_app.bdd.FavorisDatabase
+import com.example.velib_app.bdd.*
 import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
 import com.google.android.gms.location.*
@@ -115,8 +114,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             addClusteredMarkers(mMap)
         }
 
-
-
         syncImageButton.setOnClickListener {
             synchroApi()
         }
@@ -138,7 +135,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val client = OkHttpClient.Builder()
             .addInterceptor(httpLoggingInterceptor)
             .build()
-
 
         val retrofit = Retrofit.Builder()
             .baseUrl("https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/")
@@ -190,6 +186,43 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d(TAG, "synchroApiClicked: $stationClicked")
             Log.d(TAG, "synchroApiClickedDetails: $stationDetailsClicked")
 
+
+            if (stationClicked !== null) {
+                val stationIdBdd: Long = stationClicked.station_id
+                val nameBdd = stationClicked?.name
+                val numBikesAvailableBdd = stationDetailsClicked?.numBikesAvailable
+                val numDocksAvailableBdd = stationDetailsClicked?.numDocksAvailable
+                val capacityBdd = stationClicked?.capacity
+                val numBikesAvailableTypesMechanicalBdd =
+                    stationDetailsClicked?.num_bikes_available_types?.get(0)
+                        ?.get("mechanical")
+                val numBikesAvailableTypesElectricalBdd =
+                    stationDetailsClicked?.num_bikes_available_types?.get(1)
+                        ?.get("ebike")
+
+                val stationDatabase = StationDatabase.createDatabase(this)
+                val stationDao = stationDatabase.stationDao()
+                if (!isStation(stationDao, stationIdBdd)) {
+                    insertStation(
+                        stationDao,
+                        stationIdBdd,
+                        nameBdd,
+                        null,
+                        null,
+                        capacityBdd,
+                        null,
+                        numBikesAvailableBdd,
+                        numBikesAvailableTypesMechanicalBdd,
+                        numBikesAvailableTypesElectricalBdd,
+                        numDocksAvailableBdd,
+                        null,
+                        null,
+                        null
+                    )
+                }
+                stationDatabase.close()
+            }
+
             val stationId = stationClicked?.station_id.toString()
             val name = stationClicked?.name
             val numBikesAvailable = stationDetailsClicked?.numBikesAvailable.toString()
@@ -219,6 +252,52 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             intent.putExtras(bundle)
             startActivity(intent)
             true
+        }
+    }
+
+    fun isStation(stationDao: StationDao, stationId: Long): Boolean {
+        var isStation = false
+        runBlocking {
+            val findByStationIdFavorisStation: StationEntity =
+                stationDao.findByStationIdStation(stationId)
+            isStation = findByStationIdFavorisStation != null
+        }
+        return isStation
+    }
+
+    fun insertStation(
+        stationDao: StationDao,
+        stationId: Long,
+        name: String?,
+        lat: Double?,
+        lon: Double?,
+        capacity: Int?,
+        stationCode: String?,
+        numBikesAvailable: Int?,
+        numBikesAvailableTypesMechanical: Int?,
+        numBikesAvailableTypesElectrical: Int?,
+        numDocksAvailable: Int?,
+        is_installed: Int?,
+        is_returning: Int?,
+        is_renting: Int?
+    ) {
+        val stationIdLongFavorisEntityStation: StationEntity = StationEntity(
+            stationId,
+            name,
+            lat,
+            lon,
+            capacity,
+            stationCode,
+            numBikesAvailable,
+            numBikesAvailableTypesMechanical,
+            numBikesAvailableTypesElectrical,
+            numDocksAvailable,
+            is_installed,
+            is_returning,
+            is_renting
+        )
+        runBlocking {
+            stationDao.insertStation(stationIdLongFavorisEntityStation)
         }
     }
 
@@ -434,7 +513,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
         menuInflater.inflate(R.menu.menu, menu)
-        //menu?.findItem(R.id.item_liste_favoris)?.setVisible(false) //.setIcon(R.drawable.im_favoris_star_on)
+        menu?.findItem(R.id.item_liste_favoris)?.setVisible(false) //.setIcon(R.drawable.im_favoris_star_on)
         menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
         return true
     }
@@ -449,4 +528,5 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         startActivity(intent)
         return true
     }
+
 }

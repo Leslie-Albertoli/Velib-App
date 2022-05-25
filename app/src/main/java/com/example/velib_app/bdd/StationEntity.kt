@@ -14,7 +14,6 @@ data class StationEntity(
     @ColumnInfo(name = "capacity") val capacity: Int?,
     @ColumnInfo(name = "stationCode") val stationCode: String?,
     @ColumnInfo(name = "numBikesAvailable") val numBikesAvailable: Int?,
-    //@ColumnInfo(name = "num_bikes_available_types") val num_bikes_available_types: List<Map<String, Int>>?,
     @ColumnInfo(name = "numBikesAvailableTypesMechanical") val numBikesAvailableTypesMechanical: Int?,
     @ColumnInfo(name = "numBikesAvailableTypesElectrical") val numBikesAvailableTypesElectrical: Int?,
     @ColumnInfo(name = "numDocksAvailable") val numDocksAvailable: Int?,

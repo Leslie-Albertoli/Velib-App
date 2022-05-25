@@ -10,9 +10,6 @@ interface StationDao {
     @Query("SELECT * FROM station")
     suspend fun getAllSattion(): List<StationEntity>
 
-//    @Query("SELECT station_id FROM station")
-//    suspend fun getAllIdStation(): List<Long>
-
     @Query("SELECT * FROM station WHERE station_id == :station_id_var")
     suspend fun findByStationIdStation(station_id_var: Long): StationEntity
 

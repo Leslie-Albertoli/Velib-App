@@ -513,7 +513,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
         menuInflater.inflate(R.menu.menu, menu)
-        menu?.findItem(R.id.item_liste_favoris)?.setVisible(false) //.setIcon(R.drawable.im_favoris_star_on)
+        menu?.findItem(R.id.item_liste_favoris)
+            ?.setVisible(false) //.setIcon(R.drawable.im_favoris_star_on)
         menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
         return true
     }

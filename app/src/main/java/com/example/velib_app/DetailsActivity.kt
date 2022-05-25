@@ -13,20 +13,10 @@ import com.example.velib_app.bdd.FavorisDatabase
 import com.example.velib_app.bdd.FavorisEntity
 import kotlinx.coroutines.runBlocking
 
-
 private const val TAG = "DetailsActivity"
 
-/*
-astuce : ctrl + alt + L pour réaligner tout le code
-
-Log.d(TAG, "numDocks: $numDocksAvailable")
-
-btn_star_big_off
-else -> {
-    Toast.makeText(this, "Action inconnu", Toast.LENGTH_LONG).show()
-}
-*/
-//accès à la liste des favoris depuis l'écran details favoris
+//astuce : ctrl + alt + L pour réaligner tout le code
+//Log.d(TAG, "numDocks: $numDocksAvailable")
 
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
@@ -99,14 +89,6 @@ class DetailsActivity : AppCompatActivity() {
 
         when (item?.itemId) {
             R.id.item_liste_favoris -> {
-                //val bundle = Bundle()
-                //////val intent = Intent(this, FavorisActivity::class.java)
-                //bundle.putParcelableArrayList("stationList", ArrayList(stations))
-                //bundle.putParcelableArrayList("stationDetails", ArrayList(stationDetails))
-                //intent.putExtras(bundle)
-                //////startActivity(intent)
-
-
                 val intent = Intent(this, FavorisActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 startActivity(intent)
@@ -126,8 +108,6 @@ class DetailsActivity : AppCompatActivity() {
                     item.setIcon(R.drawable.im_favoris_star_off)
                     deleteFavoris(favorisDao)
                     Toast.makeText(this, "Favoris supprimé", Toast.LENGTH_LONG).show()
-
-
                     //LoaderManager.getInstance(this).initLoader(0,null,mRecipeLoaderManager);
                     /*supportLoaderManager.initLoader(1, null, this)
                     adapter = Mainrow_Adapter(this, null)

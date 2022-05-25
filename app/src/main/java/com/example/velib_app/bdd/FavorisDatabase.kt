@@ -9,7 +9,6 @@ import androidx.room.RoomDatabase
 abstract class FavorisDatabase : RoomDatabase() {
     abstract fun favorisDao(): FavorisDao
 
-
     companion object {
         fun createDatabase(ctx: Context): FavorisDatabase {
             return Room.databaseBuilder(

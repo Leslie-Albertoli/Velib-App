@@ -261,6 +261,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             intent.putExtras(bundle)
             startActivity(intent)
             true
+
+
+//            val intent = Intent(this, FavorisActivity::class.java)
+//            startActivity(intent)
+//            true
+
         }
     }
 

@@ -74,6 +74,7 @@ class FavorisAdapter(val favorisList: List<Long>) :
             bundle.putString("capacity", capacity)
             bundle.putString("numBikesAvailableTypesMechanical", numBikesAvailableTypesMechanical)
             bundle.putString("numBikesAvailableTypesElectrical", numBikesAvailableTypesElectrical)*/
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             context.startActivity(intent)
         }
 

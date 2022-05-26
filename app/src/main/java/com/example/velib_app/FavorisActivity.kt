@@ -1,5 +1,6 @@
 package com.example.velib_app
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -41,12 +42,41 @@ class FavorisActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        setContentView(R.layout.activity_favoris)
+
+        val recyclerView =
+            findViewById<RecyclerView>(R.id.list_clients_recyclerview)
+
+        recyclerView.layoutManager =
+            LinearLayoutManager(
+                this,
+                LinearLayoutManager.VERTICAL,
+                false
+            ) //Affichage lineaire vertical
+
+        val bddFavoris = FavorisDatabase.createDatabase(this)
+        val favorisDao = bddFavoris.favorisDao()
+        runBlocking {
+            val getAllId: List<Long> = favorisDao.getAllId()
+            var favorisAdapter: FavorisAdapter? = null
+            favorisAdapter = FavorisAdapter(getAllId)
+            recyclerView.adapter = favorisAdapter
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
+
+        menuInflater.inflate(R.menu.menu, menu)
 
         val actionBar: ActionBar? = supportActionBar
         actionBar?.setHomeAsUpIndicator(R.drawable.im_arrow_back);
         actionBar?.setDisplayHomeAsUpEnabled(true);
+
+        menu?.findItem(R.id.item_liste_favoris)?.setVisible(false)
+        menu?.findItem(R.id.item_favoris)?.setVisible(false)
         return true
     }
 
@@ -55,6 +85,14 @@ class FavorisActivity : AppCompatActivity() {
         when (item.itemId) {
             android.R.id.home -> {
                 finish()
+            }
+        }
+        
+        when (item?.itemId) {
+            R.id.item_map -> {
+                val intent = Intent(this, MapActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                startActivity(intent)
             }
         }
         return true

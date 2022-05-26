@@ -20,8 +20,9 @@ private const val TAG = "DetailsActivity"
 
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
+    var menuActivity: Menu? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+        override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_details)
@@ -50,9 +51,23 @@ class DetailsActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        val bddFavoris = FavorisDatabase.createDatabase(this)
+        val favorisDao = bddFavoris.favorisDao()
+        if (isFavoris(favorisDao)) { //==false
+            menuActivity?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
+        } else {
+            menuActivity?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_off)
+        }
+        bddFavoris.close()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
         menuInflater.inflate(R.menu.menu, menu)
+
+        menuActivity = menu
 
         val actionBar: ActionBar? = supportActionBar
         actionBar?.setHomeAsUpIndicator(R.drawable.im_arrow_back);
@@ -75,7 +90,8 @@ class DetailsActivity : AppCompatActivity() {
 
         when (item.itemId) {
             android.R.id.home -> {
-                val bddFavoris = FavorisDatabase.createDatabase(this)
+                finish()
+                /*val bddFavoris = FavorisDatabase.createDatabase(this)
                 val favorisDao = bddFavoris.favorisDao()
                 if (isFavoris(favorisDao)) {
                     finish()
@@ -83,11 +99,16 @@ class DetailsActivity : AppCompatActivity() {
                     val intent = Intent(this, MapActivity::class.java)
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     startActivity(intent)
-                }
+                }*/
             }
         }
 
         when (item?.itemId) {
+            R.id.item_map -> {
+                val intent = Intent(this, MapActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                startActivity(intent)
+            }
             R.id.item_liste_favoris -> {
                 val intent = Intent(this, FavorisActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)

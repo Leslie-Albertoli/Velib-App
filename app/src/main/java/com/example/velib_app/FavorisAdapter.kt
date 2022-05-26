@@ -1,13 +1,16 @@
 package com.example.velib_app
 
+import android.app.Dialog
 import android.content.Intent
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.example.velib_app.bdd.*
 import kotlinx.coroutines.runBlocking
@@ -85,29 +88,54 @@ class FavorisAdapter(val favorisList: List<Long>) :
             val stationDatabase = StationDatabase.createDatabase(context)
             val stationDao = stationDatabase.stationDao()
             val stationId = findByStationIdStation(stationDao, favoris)?.station_id
+
+            val findByStationIdStation = findByStationIdStation(stationDao, favoris)?.name
+
             stationDatabase.close()
-            if (stationId !== null) {
-                val bddFavoris = FavorisDatabase.createDatabase(context)
-                val favorisDao = bddFavoris.favorisDao()
-                if (!isFavoris(favorisDao, stationId)) { //==false
-                    favorisImageview.setImageResource(R.drawable.im_favoris_star_on)
-                    insertFavoris(favorisDao, stationId)
-                    Toast.makeText(context, "Favoris ajouté", Toast.LENGTH_LONG).show()
-                } else {
-                    deleteFavoris(favorisDao, stationId)
-                    val deletePosition: Int = holder.adapterPosition
-                    (favorisList!! as ArrayList).removeAt(deletePosition)
-                    notifyItemRemoved(deletePosition)
-                    notifyItemRangeChanged(deletePosition, favorisList.size)
-                    Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
-                    /*
-                    favorisImageview.setImageResource(R.drawable.im_favoris_star_off)
-                    deleteFavoris(favorisDao, stationId)
-                    Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
-                    */
+
+            val builder = AlertDialog.Builder(context)
+                .setTitle(R.string.confirm_delete_dialog_title)
+                .setMessage("Merci de confirmer si vous souhaitez supprimer des favoris la station ${findByStationIdStation}")
+                .setPositiveButton(R.string.yes){
+                        _,_ -> //_ = paramettres qui ne sont pas utilisés
+
+
+                    if (stationId !== null) {
+                        val bddFavoris = FavorisDatabase.createDatabase(context)
+                        val favorisDao = bddFavoris.favorisDao()
+                        if (!isFavoris(favorisDao, stationId)) { //==false
+                            favorisImageview.setImageResource(R.drawable.im_favoris_star_on)
+                            insertFavoris(favorisDao, stationId)
+                            Toast.makeText(context, "Favoris ajouté", Toast.LENGTH_LONG).show()
+                        } else {
+                            deleteFavoris(favorisDao, stationId)
+                            val deletePosition: Int = holder.adapterPosition
+                            (favorisList!! as ArrayList).removeAt(deletePosition)
+                            notifyItemRemoved(deletePosition)
+                            notifyItemRangeChanged(deletePosition, favorisList.size)
+                            Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
+                            /*
+                            favorisImageview.setImageResource(R.drawable.im_favoris_star_off)
+                            deleteFavoris(favorisDao, stationId)
+                            Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
+                            */
+                        }
+                        bddFavoris.close()
+                    }
                 }
-                bddFavoris.close()
-            }
+                .setNegativeButton(R.string.no){
+                        _,_ ->
+                }
+                .show()
+
+
+
+
+
+
+
+
+
             true
         }
 

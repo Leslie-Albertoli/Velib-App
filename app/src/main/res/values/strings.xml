@@ -1,14 +1,17 @@
 <resources>
     <string name="app_name">Velib-App</string>
     <string name="api_key">AIzaSyDME_xIWig2edHHrUODZ09y6xwNzemdg9A</string>
-    <string name="details_title_nb_bike">Nombre de vélos disponible :</string>
+    <string name="details_title_nb_bike">Nombre de vélos disponibles :</string>
     <string name="details_title_nb_place">Nombre de places disponibles :</string>
     <string name="details_title_capacity">Capcité de la station :</string>
     <string name="details_bikes_picture_description">number_bikes_picture</string>
     <string name="details_docks_picture_description">number_bikes_picture</string>
-    <string name="details_title_nb_mechanical"><![CDATA[-> Type mechanique :]]></string>
-    <string name="details_title_nb_electrical"><![CDATA[-> Type electrique :]]></string>
+    <string name="details_title_nb_mechanical"><![CDATA[-> Type mécanique :]]></string>
+    <string name="details_title_nb_electrical"><![CDATA[-> Type électrique :]]></string>
     <string name="map_location_button">Location</string>
     <string name="map_api_button">Reload map data</string>
     <string name="splash_screen_image_description">image of a bike</string>
+    <string name="confirm_delete_dialog_title">Suppression favoris</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
 </resources>

@@ -514,18 +514,19 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreateOptionsMenu(menu)
         menuInflater.inflate(R.menu.menu, menu)
         menu?.findItem(R.id.item_map)?.setVisible(false)
-        menu?.findItem(R.id.item_liste_favoris)?.setVisible(false)
-        menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
+        //menu?.findItem(R.id.item_liste_favoris)?.setVisible(false)
+        menu?.findItem(R.id.item_favoris)?.setVisible(false)
+        //menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         super.onOptionsItemSelected(item)
-        val bundle = Bundle()
+        //val bundle = Bundle()
         val intent = Intent(this, FavorisActivity::class.java)
-        bundle.putParcelableArrayList("stationList", ArrayList(stations))
+        /*bundle.putParcelableArrayList("stationList", ArrayList(stations))
         bundle.putParcelableArrayList("stationDetails", ArrayList(stationDetails))
-        intent.putExtras(bundle)
+        intent.putExtras(bundle)*/
         startActivity(intent)
         return true
     }

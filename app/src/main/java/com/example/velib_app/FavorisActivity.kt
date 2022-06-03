@@ -9,12 +9,11 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.velib_app.bdd.FavorisDao
-import com.example.velib_app.bdd.FavorisDatabase
-import com.example.velib_app.bdd.FavorisEntity
+import com.example.velib_app.bdd.*
 import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
 import kotlinx.coroutines.runBlocking
+import kotlin.coroutines.CoroutineContext
 
 class FavorisActivity : AppCompatActivity() {
 
@@ -34,12 +33,28 @@ class FavorisActivity : AppCompatActivity() {
 
         val bddFavoris = FavorisDatabase.createDatabase(this)
         val favorisDao = bddFavoris.favorisDao()
+        val stationDatabase = StationDatabase.createDatabase(this)
+        val stationDao = stationDatabase.stationDao()
         runBlocking {
+            //val getAllId: List<Long> = favorisDao.getAllId()
             val getAllId: List<Long> = favorisDao.getAllId()
+            var getAllIdNotNull: List<Long>? = null
+
+            getAllIdNotNull?.forEach {
+                val getSattionId = stationDao.findByStationIdStation(it).station_id
+                if (getSattionId != null){
+                    getAllIdNotNull += it
+                }
+            }
+
             var favorisAdapter: FavorisAdapter? = null
-            favorisAdapter = FavorisAdapter(getAllId)
+            if (getAllIdNotNull != null){
+                favorisAdapter = FavorisAdapter(getAllIdNotNull)
+            }
             recyclerView.adapter = favorisAdapter
         }
+        stationDatabase.close()
+        bddFavoris.close()
     }
 
     override fun onResume() {
@@ -64,6 +79,7 @@ class FavorisActivity : AppCompatActivity() {
             favorisAdapter = FavorisAdapter(getAllId)
             recyclerView.adapter = favorisAdapter
         }
+        bddFavoris.close()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

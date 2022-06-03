@@ -49,7 +49,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val stations: MutableList<Station> = arrayListOf()
     private val stationsTitle: MutableList<String> = mutableListOf()
-    private val stationDetails: MutableList<StationDetails> = mutableListOf()
+    val stationDetails: MutableList<StationDetails> = mutableListOf()
     private var currentLocation: LatLng = LatLng(48.78896362751979, 2.3272018540134964)
 
     lateinit var mapView: MapView
@@ -172,7 +172,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun addClusteredMarkers(googleMap: GoogleMap) {
 
         val clusterManager: ClusterManager<Station> = ClusterManager<Station>(this, googleMap)
-        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager)
+        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, stationDetails)
 
         clusterManager.addItems(stations)
         clusterManager.cluster()

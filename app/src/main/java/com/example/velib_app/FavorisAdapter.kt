@@ -1,15 +1,15 @@
 package com.example.velib_app
 
-import android.app.Dialog
 import android.content.Intent
-import android.util.Log
+import android.os.Build
+import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.example.velib_app.bdd.*
@@ -28,12 +28,14 @@ class FavorisAdapter(val favorisList: List<Long>) :
         return FavorisViewHolder(favorisView)
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onBindViewHolder(holder: FavorisViewHolder, position: Int) {
         val favoris = favorisList[position] //kotlin list ~ tableau
         val favorisTextview =
             holder.view.findViewById<TextView>(R.id.adapter_station_name_textview)
         val favorisImageview =
             holder.view.findViewById<ImageView>(R.id.adapter_favoris_imageview)
+        val favorisDeleteImageView = holder.view.findViewById<ImageView>(R.id.adapter_favoris_delete_imageview)
         val context = holder.view.context
         val stationDatabase = StationDatabase.createDatabase(context)
         val stationDao = stationDatabase.stationDao()
@@ -81,64 +83,62 @@ class FavorisAdapter(val favorisList: List<Long>) :
             context.startActivity(intent)
         }
 
-        holder.view.setOnLongClickListener {
-            val context = it.context
-            //favorisImageview.setImageResource(R.drawable.im_favoris_star_off)
-            //val stationId = stationFavoris?.station_id
-            val stationDatabase = StationDatabase.createDatabase(context)
-            val stationDao = stationDatabase.stationDao()
-            val stationId = findByStationIdStation(stationDao, favoris)?.station_id
-
-            val findByStationIdStation = findByStationIdStation(stationDao, favoris)?.name
-
-            stationDatabase.close()
-
-            val builder = AlertDialog.Builder(context)
-                .setTitle(R.string.confirm_delete_dialog_title)
-                .setMessage("Merci de confirmer si vous souhaitez supprimer des favoris la station ${findByStationIdStation}")
-                .setPositiveButton(R.string.yes){
-                        _,_ -> //_ = paramettres qui ne sont pas utilisés
-
-
-                    if (stationId !== null) {
-                        val bddFavoris = FavorisDatabase.createDatabase(context)
-                        val favorisDao = bddFavoris.favorisDao()
-                        if (!isFavoris(favorisDao, stationId)) { //==false
-                            favorisImageview.setImageResource(R.drawable.im_favoris_star_on)
-                            insertFavoris(favorisDao, stationId)
-                            Toast.makeText(context, "Favoris ajouté", Toast.LENGTH_LONG).show()
-                        } else {
-                            deleteFavoris(favorisDao, stationId)
-                            val deletePosition: Int = holder.adapterPosition
-                            (favorisList!! as ArrayList).removeAt(deletePosition)
-                            notifyItemRemoved(deletePosition)
-                            notifyItemRangeChanged(deletePosition, favorisList.size)
-                            Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
-                            /*
-                            favorisImageview.setImageResource(R.drawable.im_favoris_star_off)
-                            deleteFavoris(favorisDao, stationId)
-                            Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
-                            */
-                        }
-                        bddFavoris.close()
-                    }
-                }
-                .setNegativeButton(R.string.no){
-                        _,_ ->
-                }
-                .show()
-
-
-
-
-
-
-
-
-
-            true
+        favorisDeleteImageView.setOnClickListener {
+            deleteFavorisDialog(it, holder, favorisImageview, favoris)
         }
 
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun deleteFavorisDialog(view: View, holder: FavorisViewHolder, favorisImageview: ImageView, favoris: Long) {
+        val context = view.context
+        //favorisImageview.setImageResource(R.drawable.im_favoris_star_off)
+        //val stationId = stationFavoris?.station_id
+        val stationDatabase = StationDatabase.createDatabase(context)
+        val stationDao = stationDatabase.stationDao()
+        val stationId = findByStationIdStation(stationDao, favoris)?.station_id
+
+        val findByStationIdStation = findByStationIdStation(stationDao, favoris)?.name
+
+        stationDatabase.close()
+
+        val builder = AlertDialog.Builder(context)
+            .setTitle(R.string.confirm_delete_dialog_title)
+            .setMessage(Html.fromHtml(
+                "Voulez-vous vraiment supprimer la station <i>${findByStationIdStation}</i> de votre liste des favoris ? Cette action est irréversible !",
+                Html.FROM_HTML_MODE_LEGACY
+            ))
+            .setPositiveButton(R.string.yes){
+                    _,_ -> //_ = paramettres qui ne sont pas utilisés
+
+
+                if (stationId !== null) {
+                    val bddFavoris = FavorisDatabase.createDatabase(context)
+                    val favorisDao = bddFavoris.favorisDao()
+                    if (!isFavoris(favorisDao, stationId)) { //==false
+                        favorisImageview.setImageResource(R.drawable.im_favoris_star_on)
+                        insertFavoris(favorisDao, stationId)
+                        Toast.makeText(context, "Favoris ajouté", Toast.LENGTH_LONG).show()
+                    } else {
+                        deleteFavoris(favorisDao, stationId)
+                        val deletePosition: Int = holder.adapterPosition
+                        (favorisList!! as ArrayList).removeAt(deletePosition)
+                        notifyItemRemoved(deletePosition)
+                        notifyItemRangeChanged(deletePosition, favorisList.size)
+                        Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
+                        /*
+                        favorisImageview.setImageResource(R.drawable.im_favoris_star_off)
+                        deleteFavoris(favorisDao, stationId)
+                        Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
+                        */
+                    }
+                    bddFavoris.close()
+                }
+            }
+            .setNegativeButton(R.string.no){
+                    _,_ ->
+            }
+            .show()
     }
 
     override fun getItemCount() = favorisList.size

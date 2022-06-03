@@ -48,7 +48,7 @@
         <TextView
             android:id="@+id/details_title_nb_bike_textview"
             android:textStyle="bold"
-            android:textColor="#C4040404"
+            android:textColor="#C43AB379"
             android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -160,7 +160,7 @@
         <TextView
             android:id="@+id/details_title_nb_place_textview"
             android:textStyle="bold"
-            android:textColor="#C4040404"
+            android:textColor="#C43AB379"
             android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -198,7 +198,7 @@
         <TextView
             android:id="@+id/details_title_capacity_textview"
             android:textStyle="bold"
-            android:textColor="#C4040404"
+            android:textColor="#C43AB379"
             android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"

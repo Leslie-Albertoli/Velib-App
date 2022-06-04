@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:drawable="@drawable/marker_place"
+    <item android:drawable="@drawable/marker_place_ebike_image"
         android:width="65dp"
         android:height="65dp" />
 </layer-list>

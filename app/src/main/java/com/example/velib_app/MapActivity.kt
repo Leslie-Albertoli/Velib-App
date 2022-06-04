@@ -11,6 +11,7 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.provider.BaseColumns
@@ -19,7 +20,9 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import com.example.velib_app.api.StationService
 import com.example.velib_app.bdd.StationDao
@@ -27,6 +30,7 @@ import com.example.velib_app.bdd.StationDatabase
 import com.example.velib_app.bdd.StationEntity
 import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
+import com.example.velib_app.utils.ActionButton
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -34,6 +38,7 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.maps.android.clustering.ClusterManager
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -49,8 +54,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val stations: MutableList<Station> = arrayListOf()
     private val stationsTitle: MutableList<String> = mutableListOf()
+    lateinit var clusterManager: ClusterManager<Station>
+    lateinit var mechanicalBikeFloatingActionButton: FloatingActionButton
+    lateinit var eBikeFloatingActionButton: FloatingActionButton
     val stationDetails: MutableList<StationDetails> = mutableListOf()
     private var currentLocation: LatLng = LatLng(48.78896362751979, 2.3272018540134964)
+    private var actionButtonBoolean = ActionButton.NONE
 
     lateinit var mapView: MapView
     lateinit var mFusedLocationClient: FusedLocationProviderClient
@@ -59,7 +68,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var cursorAdapter: CursorAdapter
 
 
-    @SuppressLint("UseCompatLoadingForDrawables")
+    @RequiresApi(Build.VERSION_CODES.M)
+    @SuppressLint("UseCompatLoadingForDrawables", "ResourceAsColor")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_VelibApp)
@@ -105,6 +115,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         locationSearchView.suggestionsAdapter = cursorAdapter
 
+        mechanicalBikeFloatingActionButton = findViewById(R.id.mechanical_floating_action_button)
+
+        eBikeFloatingActionButton = findViewById(R.id.ebike_floating_action_button)
+
         val locationImageButton = findViewById<ImageButton>(R.id.location_image_button)
 
         val syncImageButton = findViewById<ImageButton>(R.id.synchro_api_image_button)
@@ -116,11 +130,36 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.getMapAsync(this)
         mapView.getMapAsync {
             mMap = it
-            addClusteredMarkers(mMap)
+            addClusteredMarkers(mMap, actionButtonBoolean)
         }
 
         syncImageButton.setOnClickListener {
             synchroApi()
+        }
+
+        mechanicalBikeFloatingActionButton.setOnClickListener {
+            if (mechanicalBikeFloatingActionButton.backgroundTintList
+                == AppCompatResources.getColorStateList(this, R.color.marker_green)) {
+                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
+            } else {
+                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.marker_green)
+                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
+            }
+
+            manageActionButton(ActionButton.MECHANICAL)
+            updateClusteredMarkers(mMap, actionButtonBoolean)
+        }
+
+        eBikeFloatingActionButton.setOnClickListener {
+            if (eBikeFloatingActionButton.backgroundTintList
+                == AppCompatResources.getColorStateList(this, R.color.marker_blue)) {
+                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
+            } else {
+                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.marker_blue)
+                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
+            }
+            manageActionButton(ActionButton.EBIKE)
+            updateClusteredMarkers(mMap, actionButtonBoolean)
         }
     }
 
@@ -130,6 +169,47 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         synchroApi()
         configureSuggestions(locationSearchView, cursorAdapter)
     }
+
+    private fun manageActionButton(actionButton: ActionButton) {
+            when(actionButtonBoolean) {
+                ActionButton.NONE -> {
+                    actionButtonBoolean = actionButton
+                    // Toast.makeText(this, "Mechanical activated", Toast.LENGTH_SHORT).show()
+                }
+                actionButton -> {
+                    actionButtonBoolean = ActionButton.NONE
+//                    Toast.makeText(this, "none activated", Toast.LENGTH_SHORT).show()
+                }
+                else -> {
+                    actionButtonBoolean = actionButton
+
+                }
+            }
+    }
+
+
+
+//        eBikeFloatingActionButton.setOnClickListener {
+//            actionButtonBoolean = when(actionButtonBoolean) {
+//                ActionButton.NONE -> ActionButton.EBIKE
+//                ActionButton.MECHANICAL -> ActionButton.EBIKE
+//                ActionButton.EBIKE -> ActionButton.NONE
+//            }
+//            manageActionButton(actionButtonBoolean, mMap)
+//        }
+//        when(actionButton) {
+//            ActionButton.MECHANICAL -> {
+//                val clusterManager: ClusterManager<Station> = ClusterManager<Station>(this, mMap)
+//                clusterManager.renderer = StationRenderer(this, mMap, clusterManager, stationDetails, actionButtonBoolean)
+//                clusterManager.addItems(stations)
+//                clusterManager.cluster()
+//                Toast.makeText(this, "Mechanical activated", Toast.LENGTH_SHORT).show()
+//            }
+//            ActionButton.EBIKE -> Toast.makeText(this, "ebike activated", Toast.LENGTH_SHORT).show()
+//            else -> {
+//                Toast.makeText(this, "none activated", Toast.LENGTH_SHORT).show()
+//            }
+//        }
 
     private fun synchroApi() {
 
@@ -169,10 +249,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun addClusteredMarkers(googleMap: GoogleMap) {
+    private fun addClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
 
-        val clusterManager: ClusterManager<Station> = ClusterManager<Station>(this, googleMap)
-        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, stationDetails)
+        clusterManager = ClusterManager<Station>(this, googleMap)
+        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, stationDetails, actionButton)
 
         clusterManager.addItems(stations)
         clusterManager.cluster()
@@ -314,6 +394,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         runBlocking {
             stationDao.insertStation(stationIdLongFavorisEntityStation)
         }
+    
+    }
+
+    private fun updateClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
+        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, stationDetails, actionButton)
+        clusterManager.cluster()
     }
 
     @SuppressLint("MissingPermission")

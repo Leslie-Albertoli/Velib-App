@@ -48,7 +48,6 @@
         <TextView
             android:id="@+id/details_title_nb_bike_textview"
             android:textStyle="bold"
-            android:textColor="#C43AB379"
             android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"

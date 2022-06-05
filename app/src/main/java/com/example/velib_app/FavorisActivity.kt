@@ -36,19 +36,18 @@ class FavorisActivity : AppCompatActivity() {
         val stationDatabase = StationDatabase.createDatabase(this)
         val stationDao = stationDatabase.stationDao()
         runBlocking {
-            //val getAllId: List<Long> = favorisDao.getAllId()
             val getAllId: List<Long> = favorisDao.getAllId()
             var getAllIdNotNull: List<Long>? = null
 
             getAllIdNotNull?.forEach {
                 val getSattionId = stationDao.findByStationIdStation(it).station_id
-                if (getSattionId != null){
+                if (getSattionId != null) {
                     getAllIdNotNull += it
                 }
             }
 
             var favorisAdapter: FavorisAdapter? = null
-            if (getAllIdNotNull != null){
+            if (getAllIdNotNull != null) {
                 favorisAdapter = FavorisAdapter(getAllIdNotNull)
             }
             recyclerView.adapter = favorisAdapter
@@ -103,7 +102,7 @@ class FavorisActivity : AppCompatActivity() {
                 finish()
             }
         }
-        
+
         when (item?.itemId) {
             R.id.item_map -> {
                 val intent = Intent(this, MapActivity::class.java)

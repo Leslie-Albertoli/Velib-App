@@ -22,7 +22,7 @@ class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
     var menuActivity: Menu? = null
 
-        override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_details)
@@ -91,15 +91,6 @@ class DetailsActivity : AppCompatActivity() {
         when (item.itemId) {
             android.R.id.home -> {
                 finish()
-                /*val bddFavoris = FavorisDatabase.createDatabase(this)
-                val favorisDao = bddFavoris.favorisDao()
-                if (isFavoris(favorisDao)) {
-                    finish()
-                } else {
-                    val intent = Intent(this, MapActivity::class.java)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    startActivity(intent)
-                }*/
             }
         }
 

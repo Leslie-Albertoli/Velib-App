@@ -22,11 +22,16 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.velib_app.api.StationService
-import com.example.velib_app.bdd.*
+import com.example.velib_app.bdd.StationDao
+import com.example.velib_app.bdd.StationDatabase
+import com.example.velib_app.bdd.StationEntity
 import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.*
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.maps.android.clustering.ClusterManager
@@ -187,18 +192,22 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d(TAG, "synchroApiClickedDetails: $stationDetailsClicked")
 
 
-            if (stationClicked !== null) {
+            if (stationClicked !== null && stationDetailsClicked !== null) {
                 val stationIdBdd: Long = stationClicked.station_id
-                val nameBdd = stationClicked?.name
-                val numBikesAvailableBdd = stationDetailsClicked?.numBikesAvailable
-                val numDocksAvailableBdd = stationDetailsClicked?.numDocksAvailable
-                val capacityBdd = stationClicked?.capacity
+                val nameBdd = stationClicked.name
+                val numBikesAvailableBdd = stationDetailsClicked.numBikesAvailable
+                val numDocksAvailableBdd = stationDetailsClicked.numDocksAvailable
+                val capacityBdd = stationClicked.capacity
                 val numBikesAvailableTypesMechanicalBdd =
-                    stationDetailsClicked?.num_bikes_available_types?.get(0)
-                        ?.get("mechanical")
+                    stationDetailsClicked.num_bikes_available_types[0]["mechanical"]
                 val numBikesAvailableTypesElectricalBdd =
-                    stationDetailsClicked?.num_bikes_available_types?.get(1)
-                        ?.get("ebike")
+                    stationDetailsClicked.num_bikes_available_types[1]["ebike"]
+                val stationCode = stationClicked.stationCode
+                val stationLat = stationClicked.lat
+                val stationLon = stationClicked.lon
+                val stationIsInstalled = stationDetailsClicked.is_installed
+                val stationIsReturning = stationDetailsClicked.is_returning
+                val stationIsRenting = stationDetailsClicked.is_renting
 
                 val stationDatabase = StationDatabase.createDatabase(this)
                 val stationDao = stationDatabase.stationDao()
@@ -207,17 +216,17 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                         stationDao,
                         stationIdBdd,
                         nameBdd,
-                        null,
-                        null,
+                        stationLat,
+                        stationLon,
                         capacityBdd,
-                        null,
+                        stationCode,
                         numBikesAvailableBdd,
                         numBikesAvailableTypesMechanicalBdd,
                         numBikesAvailableTypesElectricalBdd,
                         numDocksAvailableBdd,
-                        null,
-                        null,
-                        null
+                        stationIsInstalled,
+                        stationIsReturning,
+                        stationIsRenting
                     )
                 }
                 stationDatabase.close()
@@ -255,8 +264,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    fun isStation(stationDao: StationDao, stationId: Long): Boolean {
-        var isStation = false
+    private fun isStation(stationDao: StationDao, stationId: Long): Boolean {
+        var isStation: Boolean
         runBlocking {
             val findByStationIdFavorisStation: StationEntity =
                 stationDao.findByStationIdStation(stationId)
@@ -265,7 +274,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         return isStation
     }
 
-    fun insertStation(
+    private fun insertStation(
         stationDao: StationDao,
         stationId: Long,
         name: String?,
@@ -281,7 +290,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         is_returning: Int?,
         is_renting: Int?
     ) {
-        val stationIdLongFavorisEntityStation: StationEntity = StationEntity(
+        val stationIdLongFavorisEntityStation = StationEntity(
             stationId,
             name,
             lat,
@@ -315,7 +324,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                             requestNewLocationData()
                         } else {
                             currentLocation = LatLng(location.latitude, location.longitude)
-//                            mMap.addMarker(MarkerOptions().position(currentLocation))
                             mMap.animateCamera(
                                 CameraUpdateFactory.newLatLngZoom(
                                     currentLocation,

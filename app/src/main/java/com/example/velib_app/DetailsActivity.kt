@@ -16,7 +16,6 @@ import kotlinx.coroutines.runBlocking
 private const val TAG = "DetailsActivity"
 
 //astuce : ctrl + alt + L pour réaligner tout le code
-//Log.d(TAG, "numDocks: $numDocksAvailable")
 
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
@@ -55,7 +54,7 @@ class DetailsActivity : AppCompatActivity() {
         super.onResume()
         val bddFavoris = FavorisDatabase.createDatabase(this)
         val favorisDao = bddFavoris.favorisDao()
-        if (isFavoris(favorisDao)) { //==false
+        if (isFavoris(favorisDao)) {
             menuActivity?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
         } else {
             menuActivity?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_off)
@@ -75,7 +74,7 @@ class DetailsActivity : AppCompatActivity() {
 
         val bddFavoris = FavorisDatabase.createDatabase(this)
         val favorisDao = bddFavoris.favorisDao()
-        if (isFavoris(favorisDao)) { //==false
+        if (isFavoris(favorisDao)) {
             menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
         } else {
             menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_off)
@@ -94,7 +93,7 @@ class DetailsActivity : AppCompatActivity() {
             }
         }
 
-        when (item?.itemId) {
+        when (item.itemId) {
             R.id.item_map -> {
                 val intent = Intent(this, MapActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -108,11 +107,7 @@ class DetailsActivity : AppCompatActivity() {
             R.id.item_favoris -> {
                 val bddFavoris = FavorisDatabase.createDatabase(this)
                 val favorisDao = bddFavoris.favorisDao()
-                /*runBlocking {
-                    val getAll: List<FavorisEntity> = favorisDao.getAll()
-                    Log.d(TAG, "1-----------------: $getAll")
-                }*/
-                if (!isFavoris(favorisDao)) { //==false
+                if (!isFavoris(favorisDao)) {
                     item.setIcon(R.drawable.im_favoris_star_on)
                     insertFavoris(favorisDao)
                     Toast.makeText(this, "Favoris ajouté", Toast.LENGTH_LONG).show()
@@ -120,15 +115,7 @@ class DetailsActivity : AppCompatActivity() {
                     item.setIcon(R.drawable.im_favoris_star_off)
                     deleteFavoris(favorisDao)
                     Toast.makeText(this, "Favoris supprimé", Toast.LENGTH_LONG).show()
-                    //LoaderManager.getInstance(this).initLoader(0,null,mRecipeLoaderManager);
-                    /*supportLoaderManager.initLoader(1, null, this)
-                    adapter = Mainrow_Adapter(this, null)
-                    recyclerView.setAdapter(adapter)*/
                 }
-                /*runBlocking {
-                    val getAll: List<FavorisEntity> = favorisDao.getAll()
-                    Log.d(TAG, "2-----------------: $getAll")
-                }*/
                 bddFavoris.close()
             }
         }
@@ -136,7 +123,7 @@ class DetailsActivity : AppCompatActivity() {
     }
 
     fun isFavoris(favorisDao: FavorisDao): Boolean {
-        var isFavoris = false
+        var isFavoris: Boolean
         runBlocking {
             val findByStationIdFavoris: FavorisEntity = favorisDao.findByStationId(stationIdThis)
             isFavoris = findByStationIdFavoris != null
@@ -145,14 +132,14 @@ class DetailsActivity : AppCompatActivity() {
     }
 
     fun insertFavoris(favorisDao: FavorisDao) {
-        val stationIdLongFavorisEntity: FavorisEntity = FavorisEntity(stationIdThis)
+        val stationIdLongFavorisEntity = FavorisEntity(stationIdThis)
         runBlocking {
             favorisDao.insert(stationIdLongFavorisEntity)
         }
     }
 
     fun deleteFavoris(favorisDao: FavorisDao) {
-        val stationIdLongFavorisEntity: FavorisEntity = FavorisEntity(stationIdThis)
+        val stationIdLongFavorisEntity = FavorisEntity(stationIdThis)
         runBlocking {
             favorisDao.delete(stationIdLongFavorisEntity)
         }

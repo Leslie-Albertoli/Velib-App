@@ -18,7 +18,7 @@ import kotlinx.coroutines.runBlocking
 
 private const val TAG = "FavorisAdapter"
 
-class FavorisAdapter(val favorisList: List<Long>) :
+class FavorisAdapter(private val favorisList: List<Long>) :
     RecyclerView.Adapter<FavorisAdapter.FavorisViewHolder>() {
 
     class FavorisViewHolder(val view: View) : RecyclerView.ViewHolder(view)
@@ -74,14 +74,6 @@ class FavorisAdapter(val favorisList: List<Long>) :
             intent.putExtra("capacity", capacity)
             intent.putExtra("numBikesAvailableTypesMechanical", numBikesAvailableTypesMechanical)
             intent.putExtra("numBikesAvailableTypesElectrical", numBikesAvailableTypesElectrical)
-            /*val bundle = Bundle()
-            bundle.putString("stationId", stationId)
-            bundle.putString("name", name)
-            bundle.putString("numBikes", numBikesAvailable)
-            bundle.putString("numDocks", numDocksAvailable)
-            bundle.putString("capacity", capacity)
-            bundle.putString("numBikesAvailableTypesMechanical", numBikesAvailableTypesMechanical)
-            bundle.putString("numBikesAvailableTypesElectrical", numBikesAvailableTypesElectrical)*/
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             context.startActivity(intent)
         }
@@ -100,8 +92,6 @@ class FavorisAdapter(val favorisList: List<Long>) :
         favoris: Long
     ) {
         val context = view.context
-        //favorisImageview.setImageResource(R.drawable.im_favoris_star_off)
-        //val stationId = stationFavoris?.station_id
         val stationDatabase = StationDatabase.createDatabase(context)
         val stationDao = stationDatabase.stationDao()
         val stationId = findByStationIdStation(stationDao, favoris)?.station_id
@@ -110,7 +100,7 @@ class FavorisAdapter(val favorisList: List<Long>) :
 
         stationDatabase.close()
 
-        val builder = AlertDialog.Builder(context)
+        AlertDialog.Builder(context)
             .setTitle(R.string.confirm_delete_dialog_title)
             .setMessage(
                 Html.fromHtml(
@@ -118,20 +108,20 @@ class FavorisAdapter(val favorisList: List<Long>) :
                     Html.FROM_HTML_MODE_LEGACY
                 )
             )
-            .setPositiveButton(R.string.yes) { _, _ -> //_ = paramettres qui ne sont pas utilisés
+            .setPositiveButton(R.string.yes) { _, _ ->
 
 
                 if (stationId !== null) {
                     val bddFavoris = FavorisDatabase.createDatabase(context)
                     val favorisDao = bddFavoris.favorisDao()
-                    if (!isFavoris(favorisDao, stationId)) { //==false
+                    if (!isFavoris(favorisDao, stationId)) {
                         favorisImageview.setImageResource(R.drawable.im_favoris_star_on)
                         insertFavoris(favorisDao, stationId)
                         Toast.makeText(context, "Favoris ajouté", Toast.LENGTH_LONG).show()
                     } else {
                         deleteFavoris(favorisDao, stationId)
                         val deletePosition: Int = holder.adapterPosition
-                        (favorisList!! as ArrayList).removeAt(deletePosition)
+                        (favorisList as ArrayList).removeAt(deletePosition)
                         notifyItemRemoved(deletePosition)
                         notifyItemRangeChanged(deletePosition, favorisList.size)
                         Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
@@ -156,21 +146,21 @@ class FavorisAdapter(val favorisList: List<Long>) :
     }
 
     fun insertFavoris(favorisDao: FavorisDao, stationId: Long) {
-        val stationIdLongFavorisEntity: FavorisEntity = FavorisEntity(stationId)
+        val stationIdLongFavorisEntity = FavorisEntity(stationId)
         runBlocking {
             favorisDao.insert(stationIdLongFavorisEntity)
         }
     }
 
     fun deleteFavoris(favorisDao: FavorisDao, stationId: Long) {
-        val stationIdLongFavorisEntity: FavorisEntity = FavorisEntity(stationId)
+        val stationIdLongFavorisEntity = FavorisEntity(stationId)
         runBlocking {
             favorisDao.delete(stationIdLongFavorisEntity)
         }
     }
 
     fun findByStationIdStation(stationDao: StationDao, stationId: Long): StationEntity? {
-        var station: StationEntity? = null
+        var station: StationEntity?
         runBlocking {
             station = stationDao.findByStationIdStation(stationId)
         }

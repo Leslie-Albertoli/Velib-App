@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!--item
+    <item
+        android:id="@+id/item_map"
+        android:title="Map"
+        android:icon="@drawable/im_map"
+        app:showAsAction="always"/>
+    <item
         android:id="@+id/item_liste_favoris"
         android:title="Favoris"
         android:icon="@drawable/im_liste_favoris"
-        app:showAsAction="always"/-->
+        app:showAsAction="always"/>
     <item
         android:id="@+id/item_favoris"
         android:title="Favoris"

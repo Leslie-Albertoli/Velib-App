@@ -18,7 +18,9 @@
         android:textSize="22sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginRight="50dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.050"/>
@@ -28,7 +30,9 @@
         android:id="@+id/details_nb_bike_linearlayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/details_station_name_textview"
         app:layout_constraintVertical_bias="0.050">
@@ -44,7 +48,8 @@
         <TextView
             android:id="@+id/details_title_nb_bike_textview"
             android:textStyle="bold"
-            android:layout_width="250dp"
+            android:textColor="#C43AB379"
+            android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="10dp"
@@ -63,7 +68,9 @@
         android:id="@+id/details_nb_mechanical_linearlayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
         app:layout_constraintVertical_bias="0.030">
@@ -79,7 +86,7 @@
             android:id="@+id/details_title_nb_mechanical_textview"
             android:textStyle="bold"
             android:textColor="#C43AB379"
-            android:layout_width="250dp"
+            android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="10dp"
@@ -98,7 +105,9 @@
         android:id="@+id/details_nb_electrical_linearlayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
         app:layout_constraintVertical_bias="0.030">
@@ -114,7 +123,7 @@
             android:id="@+id/details_title_nb_electrical_textview"
             android:textStyle="bold"
             android:textColor="#C43AB379"
-            android:layout_width="250dp"
+            android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="10dp"
@@ -133,7 +142,9 @@
         android:id="@+id/details_nb_place_linearlayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
         app:layout_constraintVertical_bias="0.030">
@@ -149,7 +160,8 @@
         <TextView
             android:id="@+id/details_title_nb_place_textview"
             android:textStyle="bold"
-            android:layout_width="250dp"
+            android:textColor="#C43AB379"
+            android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="10dp"
@@ -168,7 +180,9 @@
         android:id="@+id/details_capacity_linearlayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
         app:layout_constraintVertical_bias="0.030">
@@ -184,7 +198,8 @@
         <TextView
             android:id="@+id/details_title_capacity_textview"
             android:textStyle="bold"
-            android:layout_width="250dp"
+            android:textColor="#C43AB379"
+            android:layout_width="210dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="10dp"
@@ -198,6 +213,15 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"/>
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/details_velo_imageview"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="80dp"
+        android:contentDescription="@string/details_docks_picture_description"
+        android:src="@drawable/im_velo" />
 
 
 </LinearLayout>

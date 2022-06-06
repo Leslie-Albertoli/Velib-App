@@ -19,15 +19,19 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
-import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.velib_app.api.StationService
-import com.example.velib_app.bdd.FavorisDatabase
+import com.example.velib_app.bdd.StationDao
+import com.example.velib_app.bdd.StationDatabase
+import com.example.velib_app.bdd.StationEntity
 import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.*
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.maps.android.clustering.ClusterManager
@@ -115,8 +119,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             addClusteredMarkers(mMap)
         }
 
-
-
         syncImageButton.setOnClickListener {
             synchroApi()
         }
@@ -138,7 +140,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val client = OkHttpClient.Builder()
             .addInterceptor(httpLoggingInterceptor)
             .build()
-
 
         val retrofit = Retrofit.Builder()
             .baseUrl("https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/")
@@ -190,6 +191,47 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d(TAG, "synchroApiClicked: $stationClicked")
             Log.d(TAG, "synchroApiClickedDetails: $stationDetailsClicked")
 
+
+            if (stationClicked !== null && stationDetailsClicked !== null) {
+                val stationIdBdd: Long = stationClicked.station_id
+                val nameBdd = stationClicked.name
+                val numBikesAvailableBdd = stationDetailsClicked.numBikesAvailable
+                val numDocksAvailableBdd = stationDetailsClicked.numDocksAvailable
+                val capacityBdd = stationClicked.capacity
+                val numBikesAvailableTypesMechanicalBdd =
+                    stationDetailsClicked.num_bikes_available_types[0]["mechanical"]
+                val numBikesAvailableTypesElectricalBdd =
+                    stationDetailsClicked.num_bikes_available_types[1]["ebike"]
+                val stationCode = stationClicked.stationCode
+                val stationLat = stationClicked.lat
+                val stationLon = stationClicked.lon
+                val stationIsInstalled = stationDetailsClicked.is_installed
+                val stationIsReturning = stationDetailsClicked.is_returning
+                val stationIsRenting = stationDetailsClicked.is_renting
+
+                val stationDatabase = StationDatabase.createDatabase(this)
+                val stationDao = stationDatabase.stationDao()
+                if (!isStation(stationDao, stationIdBdd)) {
+                    insertStation(
+                        stationDao,
+                        stationIdBdd,
+                        nameBdd,
+                        stationLat,
+                        stationLon,
+                        capacityBdd,
+                        stationCode,
+                        numBikesAvailableBdd,
+                        numBikesAvailableTypesMechanicalBdd,
+                        numBikesAvailableTypesElectricalBdd,
+                        numDocksAvailableBdd,
+                        stationIsInstalled,
+                        stationIsReturning,
+                        stationIsRenting
+                    )
+                }
+                stationDatabase.close()
+            }
+
             val stationId = stationClicked?.station_id.toString()
             val name = stationClicked?.name
             val numBikesAvailable = stationDetailsClicked?.numBikesAvailable.toString()
@@ -222,6 +264,52 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun isStation(stationDao: StationDao, stationId: Long): Boolean {
+        var isStation: Boolean
+        runBlocking {
+            val findByStationIdFavorisStation: StationEntity =
+                stationDao.findByStationIdStation(stationId)
+            isStation = findByStationIdFavorisStation != null
+        }
+        return isStation
+    }
+
+    private fun insertStation(
+        stationDao: StationDao,
+        stationId: Long,
+        name: String?,
+        lat: Double?,
+        lon: Double?,
+        capacity: Int?,
+        stationCode: String?,
+        numBikesAvailable: Int?,
+        numBikesAvailableTypesMechanical: Int?,
+        numBikesAvailableTypesElectrical: Int?,
+        numDocksAvailable: Int?,
+        is_installed: Int?,
+        is_returning: Int?,
+        is_renting: Int?
+    ) {
+        val stationIdLongFavorisEntityStation = StationEntity(
+            stationId,
+            name,
+            lat,
+            lon,
+            capacity,
+            stationCode,
+            numBikesAvailable,
+            numBikesAvailableTypesMechanical,
+            numBikesAvailableTypesElectrical,
+            numDocksAvailable,
+            is_installed,
+            is_returning,
+            is_renting
+        )
+        runBlocking {
+            stationDao.insertStation(stationIdLongFavorisEntityStation)
+        }
+    }
+
     @SuppressLint("MissingPermission")
     private fun getLastLocation() {
         if (checkPermissions()) {
@@ -236,7 +324,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                             requestNewLocationData()
                         } else {
                             currentLocation = LatLng(location.latitude, location.longitude)
-//                            mMap.addMarker(MarkerOptions().position(currentLocation))
                             mMap.animateCamera(
                                 CameraUpdateFactory.newLatLngZoom(
                                     currentLocation,
@@ -430,23 +517,19 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.onLowMemory()
     }
 
-
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
         menuInflater.inflate(R.menu.menu, menu)
-        //menu?.findItem(R.id.item_liste_favoris)?.setVisible(false) //.setIcon(R.drawable.im_favoris_star_on)
-        menu?.findItem(R.id.item_favoris)?.setIcon(R.drawable.im_favoris_star_on)
+        menu?.findItem(R.id.item_map)?.setVisible(false)
+        menu?.findItem(R.id.item_favoris)?.setVisible(false)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         super.onOptionsItemSelected(item)
-        val bundle = Bundle()
         val intent = Intent(this, FavorisActivity::class.java)
-        bundle.putParcelableArrayList("stationList", ArrayList(stations))
-        bundle.putParcelableArrayList("stationDetails", ArrayList(stationDetails))
-        intent.putExtras(bundle)
         startActivity(intent)
         return true
     }
+
 }

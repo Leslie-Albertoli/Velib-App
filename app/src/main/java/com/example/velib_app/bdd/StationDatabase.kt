@@ -5,15 +5,15 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [FavorisEntity::class], version = 2)
-abstract class FavorisDatabase : RoomDatabase() {
-    abstract fun favorisDao(): FavorisDao
+@Database(entities = [StationEntity::class], version = 2)
+abstract class StationDatabase : RoomDatabase() {
+    abstract fun stationDao(): StationDao
 
     companion object {
-        fun createDatabase(ctx: Context): FavorisDatabase {
+        fun createDatabase(ctx: Context): StationDatabase {
             return Room.databaseBuilder(
                 ctx,
-                FavorisDatabase::class.java, "listFavoris.db"
+                StationDatabase::class.java, "listStation.db"
             )
                 .fallbackToDestructiveMigration()
                 .build()

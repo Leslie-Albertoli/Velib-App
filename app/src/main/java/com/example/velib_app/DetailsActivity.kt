@@ -122,7 +122,7 @@ class DetailsActivity : AppCompatActivity() {
         return true
     }
 
-    fun isFavoris(favorisDao: FavorisDao): Boolean {
+    private fun isFavoris(favorisDao: FavorisDao): Boolean {
         var isFavoris: Boolean
         runBlocking {
             val findByStationIdFavoris: FavorisEntity = favorisDao.findByStationId(stationIdThis)
@@ -131,14 +131,14 @@ class DetailsActivity : AppCompatActivity() {
         return isFavoris
     }
 
-    fun insertFavoris(favorisDao: FavorisDao) {
+    private fun insertFavoris(favorisDao: FavorisDao) {
         val stationIdLongFavorisEntity = FavorisEntity(stationIdThis)
         runBlocking {
             favorisDao.insert(stationIdLongFavorisEntity)
         }
     }
 
-    fun deleteFavoris(favorisDao: FavorisDao) {
+    private fun deleteFavoris(favorisDao: FavorisDao) {
         val stationIdLongFavorisEntity = FavorisEntity(stationIdThis)
         runBlocking {
             favorisDao.delete(stationIdLongFavorisEntity)

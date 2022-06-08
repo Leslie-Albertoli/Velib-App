@@ -31,6 +31,7 @@ import com.example.velib_app.bdd.StationEntity
 import com.example.velib_app.model.Station
 import com.example.velib_app.model.StationDetails
 import com.example.velib_app.utils.ActionButton
+import com.example.velib_app.utils.CheckNetworkConnection
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -41,23 +42,20 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.maps.android.clustering.ClusterManager
 import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
 private const val TAG = "MapActivity"
 private const val PERMISSION_ID = 42
 private const val MAPVIEW_BUNDLE_KEY: String = "MapViewBundleKey"
+private const val LOADING_TEXT: String = "Chargement des données des stations ..."
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val stations: MutableList<Station> = arrayListOf()
     private val stationsTitle: MutableList<String> = mutableListOf()
-    lateinit var clusterManager: ClusterManager<Station>
-    lateinit var mechanicalBikeFloatingActionButton: FloatingActionButton
-    lateinit var eBikeFloatingActionButton: FloatingActionButton
-    val stationDetails: MutableList<StationDetails> = mutableListOf()
+
+    private val stationDetails: MutableList<StationDetails> = mutableListOf()
     private var currentLocation: LatLng = LatLng(48.78896362751979, 2.3272018540134964)
     private var actionButtonBoolean = ActionButton.NONE
 
@@ -66,6 +64,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var mMap: GoogleMap
     lateinit var locationSearchView: SearchView
     lateinit var cursorAdapter: CursorAdapter
+    lateinit var clusterManager: ClusterManager<Station>
+    lateinit var mechanicalBikeFloatingActionButton: FloatingActionButton
+    lateinit var eBikeFloatingActionButton: FloatingActionButton
+    lateinit var linearLayout: LinearLayout
+    private lateinit var checkNetworkConnection: CheckNetworkConnection
 
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -83,6 +86,17 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(mapViewBundle)
+
+//        val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+//        builder.setCancelable(true)
+//        builder.setView(R.id.loading_linear_layout)
+
+         linearLayout = findViewById<LinearLayout>(R.id.loading_linear_layout)
+
+
+//        val dialog = builder.create()
+//
+//        dialog.show()
 
 
         // Fetching API_KEY which we wrapped
@@ -128,14 +142,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         mapView.getMapAsync(this)
-        mapView.getMapAsync {
-            mMap = it
-            addClusteredMarkers(mMap, actionButtonBoolean)
-        }
 
-        syncImageButton.setOnClickListener {
-            synchroApi()
-        }
+//        mapView.getMapAsync {
+//            mMap = it
+//
+//        }
 
         mechanicalBikeFloatingActionButton.setOnClickListener {
             if (mechanicalBikeFloatingActionButton.backgroundTintList
@@ -145,7 +156,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.marker_green)
                 eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
             }
-
             manageActionButton(ActionButton.MECHANICAL)
             updateClusteredMarkers(mMap, actionButtonBoolean)
         }
@@ -161,70 +171,90 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             manageActionButton(ActionButton.EBIKE)
             updateClusteredMarkers(mMap, actionButtonBoolean)
         }
+
+        syncImageButton.setOnClickListener {
+            synchroApi()
+        }
+
+//        mechanicalBikeFloatingActionButton.setOnClickListener {
+//            if (mechanicalBikeFloatingActionButton.backgroundTintList
+//                == AppCompatResources.getColorStateList(this, R.color.marker_green)) {
+//                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
+//            } else {
+//                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.marker_green)
+//                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
+//            }
+//
+//            manageActionButton(ActionButton.MECHANICAL)
+//            updateClusteredMarkers(mMap, actionButtonBoolean)
+//        }
+//
+//        eBikeFloatingActionButton.setOnClickListener {
+//            if (eBikeFloatingActionButton.backgroundTintList
+//                == AppCompatResources.getColorStateList(this, R.color.marker_blue)) {
+//                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
+//            } else {
+//                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.marker_blue)
+//                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
+//            }
+//            manageActionButton(ActionButton.EBIKE)
+//            updateClusteredMarkers(mMap, actionButtonBoolean)
+//        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        callNetworkConnection()
         getLastLocation()
-        synchroApi()
-        configureSuggestions(locationSearchView, cursorAdapter)
     }
 
     private fun manageActionButton(actionButton: ActionButton) {
-            when(actionButtonBoolean) {
-                ActionButton.NONE -> {
-                    actionButtonBoolean = actionButton
-                    // Toast.makeText(this, "Mechanical activated", Toast.LENGTH_SHORT).show()
-                }
-                actionButton -> {
-                    actionButtonBoolean = ActionButton.NONE
-//                    Toast.makeText(this, "none activated", Toast.LENGTH_SHORT).show()
-                }
-                else -> {
-                    actionButtonBoolean = actionButton
-
-                }
+        actionButtonBoolean = when(actionButtonBoolean) {
+            ActionButton.NONE -> {
+                actionButton
             }
+            actionButton -> {
+                ActionButton.NONE
+            }
+            else -> {
+                actionButton
+            }
+        }
     }
 
-
-
-//        eBikeFloatingActionButton.setOnClickListener {
-//            actionButtonBoolean = when(actionButtonBoolean) {
-//                ActionButton.NONE -> ActionButton.EBIKE
-//                ActionButton.MECHANICAL -> ActionButton.EBIKE
-//                ActionButton.EBIKE -> ActionButton.NONE
+    // pour faire les requetes API de manière asynchrone mais n'update pas l'UI dès que l'appel est terminé...
+//    val retrofit = Retrofit.Builder()
+//        .baseUrl("https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/")
+//        .addConverterFactory(MoshiConverterFactory.create())
+//        .build()
+//        .create(StationService::class.java)
+//
+//
+//    GlobalScope.launch(Dispatchers.IO) {
+//        val stationsResult = retrofit.getStations()
+//        val stationsDetailsResults = retrofit.getStationDetails()
+//        if (stationsResult.isSuccessful) {
+//            stationsResult.body()?.data?.stations?.map {
+//                stations.add(it)
 //            }
-//            manageActionButton(actionButtonBoolean, mMap)
-//        }
-//        when(actionButton) {
-//            ActionButton.MECHANICAL -> {
-//                val clusterManager: ClusterManager<Station> = ClusterManager<Station>(this, mMap)
-//                clusterManager.renderer = StationRenderer(this, mMap, clusterManager, stationDetails, actionButtonBoolean)
-//                clusterManager.addItems(stations)
-//                clusterManager.cluster()
-//                Toast.makeText(this, "Mechanical activated", Toast.LENGTH_SHORT).show()
-//            }
-//            ActionButton.EBIKE -> Toast.makeText(this, "ebike activated", Toast.LENGTH_SHORT).show()
-//            else -> {
-//                Toast.makeText(this, "none activated", Toast.LENGTH_SHORT).show()
+//
+//            stationsResult.body()?.data?.stations?.map {
+//                stationsTitle.add(it.name)
 //            }
 //        }
+//
+//        if (stationsDetailsResults.isSuccessful) {
+//            stationsDetailsResults.body()?.data?.stations?.map {
+//                stationDetails.add(it)
+//            }
+//        }
+//    }
 
     private fun synchroApi() {
-
-        val httpLoggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-
-        val client = OkHttpClient.Builder()
-            .addInterceptor(httpLoggingInterceptor)
-            .build()
 
         val retrofit = Retrofit.Builder()
             .baseUrl("https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/")
             .addConverterFactory(MoshiConverterFactory.create())
-            .client(client)
             .build()
 
         val service = retrofit.create(StationService::class.java)
@@ -246,7 +276,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             resultStationDetails.data.stations.map {
                 stationDetails.add(it)
             }
+
+            val stationDatabase = StationDatabase.createDatabase(applicationContext)
+            val stationDao = stationDatabase.stationDao()
+
+            stationDao.deleteAllStations()
+
         }
+
     }
 
     private fun addClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
@@ -399,6 +436,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun updateClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
         clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, stationDetails, actionButton)
+        clusterManager.clearItems()
+        clusterManager.addItems(stations)
         clusterManager.cluster()
     }
 
@@ -612,8 +651,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         super.onCreateOptionsMenu(menu)
         menuInflater.inflate(R.menu.menu, menu)
-        menu?.findItem(R.id.item_map)?.setVisible(false)
-        menu?.findItem(R.id.item_favoris)?.setVisible(false)
+        menu?.findItem(R.id.item_map)?.isVisible = false
+        menu?.findItem(R.id.item_favoris)?.isVisible = false
         return true
     }
 
@@ -623,5 +662,91 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         startActivity(intent)
         return true
     }
+
+//    private fun isInternet(context: Context): Boolean {
+//        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+//            if (capabilities != null) {
+//                return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+//                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+//                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+//            }
+//        }
+//        return false
+//    }
+
+    private fun callNetworkConnection() {
+        checkNetworkConnection = CheckNetworkConnection(application)
+        checkNetworkConnection.observe(this) { isConnected ->
+            if (isConnected) {
+                if (stations.isEmpty()) {
+                    synchroApi()
+                    addClusteredMarkers(mMap, actionButtonBoolean)
+                }
+                configureSuggestions(locationSearchView, cursorAdapter)
+            }
+        }
+    }
+
+//    private fun setProgressDialog() {
+//
+//        // Creating a Linear Layout
+//        val llPadding = 30
+//        val ll = LinearLayout(this)
+//        ll.orientation = LinearLayout.HORIZONTAL
+//        ll.setPadding(llPadding, llPadding, llPadding, llPadding)
+//        ll.gravity = Gravity.CENTER
+//        var llParam = LinearLayout.LayoutParams(
+//            LinearLayout.LayoutParams.WRAP_CONTENT,
+//            LinearLayout.LayoutParams.WRAP_CONTENT
+//        )
+//        llParam.gravity = Gravity.CENTER
+//        ll.layoutParams = llParam
+//
+//        // Creating a ProgressBar inside the layout
+//        val progressBar = ProgressBar(this)
+//        progressBar.isIndeterminate = true
+//        progressBar.setPadding(0, 0, llPadding, 0)
+//        progressBar.layoutParams = llParam
+//        llParam = LinearLayout.LayoutParams(
+//            ViewGroup.LayoutParams.WRAP_CONTENT,
+//            ViewGroup.LayoutParams.WRAP_CONTENT
+//        )
+//        llParam.gravity = Gravity.CENTER
+//
+//        // Creating a TextView inside the layout
+//        val tvText = TextView(this)
+//        tvText.text = LOADING_TEXT
+//        tvText.setTextColor(Color.parseColor("#000000"))
+//        tvText.textSize = 20f
+//        tvText.layoutParams = llParam
+//        ll.addView(progressBar)
+//        ll.addView(tvText)
+//
+//        // Setting the AlertDialog Builder view
+//        // as the Linear layout created above
+//        val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+//        builder.setCancelable(true)
+//        builder.setView(ll)
+//
+//        builder.show()
+//
+//        // Displaying the dialog
+//        val dialog: AlertDialog = builder.create()
+//        dialog.show()
+//
+//        val window: Window? = dialog.window
+//        if (window != null) {
+//            val layoutParams = WindowManager.LayoutParams()
+//            layoutParams.copyFrom(dialog.window?.attributes)
+//            layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
+//            layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT
+//            dialog.window?.attributes = layoutParams
+//
+//            // Disabling screen touch to avoid exiting the Dialog
+//            window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+//        }
+//    }
 
 }

@@ -19,6 +19,26 @@
         android:iconifiedByDefault="false"
         android:queryHint="Cherchez une station..." />
 
+    <LinearLayout
+        android:id="@+id/loading_linear_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:layout_gravity="center"
+            android:text="Veuillez patientez pendant le chargement des données ..." />
+
+    </LinearLayout>
+
     <com.google.android.gms.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
@@ -54,6 +74,8 @@
             android:contentDescription="TODO" />
 
     </LinearLayout>
+
+
 
     <ImageButton
         android:id="@+id/synchro_api_image_button"

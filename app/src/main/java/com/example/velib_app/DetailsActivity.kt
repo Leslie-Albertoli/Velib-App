@@ -1,26 +1,31 @@
 package com.example.velib_app
 
 import android.content.Intent
+import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import com.example.velib_app.bdd.FavorisDao
-import com.example.velib_app.bdd.FavorisDatabase
-import com.example.velib_app.bdd.FavorisEntity
+import com.example.velib_app.bdd.*
 import kotlinx.coroutines.runBlocking
+import java.util.*
 
 private const val TAG = "DetailsActivity"
-
+private const val RENTAL_CREDIT_CARD_TEXT = "Paiement disponible par carte de crédit"
 //astuce : ctrl + alt + L pour réaligner tout le code
 
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
     var menuActivity: Menu? = null
 
+    lateinit var stationEntity: StationEntity
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -34,19 +39,31 @@ class DetailsActivity : AppCompatActivity() {
             findViewById<TextView>(R.id.details_nb_mechanical_textview)
         val detailsNbElectricalTextView =
             findViewById<TextView>(R.id.details_nb_electrical_textview)
+        val detailsLastReportedTextView = findViewById<TextView>(R.id.details_last_reported_text_view)
+        val detailsRentalMethodsTextView = findViewById<TextView>(R.id.rental_methods_text_view)
 
         val bundle = intent.extras
-
+        val stationDatabase = StationDatabase.createDatabase(this)
+        val stationDao = stationDatabase.stationDao()
         if (bundle !== null) {
             stationIdThis = bundle.getString("stationId")?.toLong() ?: -1
-            detailsStationNameTextView.text = bundle.getString("name")
-            detailsNbBikeTextView.text = bundle.getString("numBikes")
-            detailsNbPlaceTextView.text = bundle.getString("numDocks")
-            detailsCapacityTextView.text = bundle.getString("capacity")
-            detailsNbMechanicalTextView.text =
-                bundle.getString("numBikesAvailableTypesMechanical")
-            detailsNbElectricalTextView.text =
-                bundle.getString("numBikesAvailableTypesElectrical")
+        }
+
+        runBlocking {
+            stationEntity = stationDao.findByStationIdStation(stationIdThis)
+        }
+
+        detailsStationNameTextView.text = stationEntity.name
+        detailsNbBikeTextView.text = stationEntity.numBikesAvailable.toString()
+        detailsNbPlaceTextView.text = stationEntity.numDocksAvailable.toString()
+        detailsCapacityTextView.text = stationEntity.capacity.toString()
+        detailsNbMechanicalTextView.text =
+            stationEntity.numBikesAvailableTypesMechanical.toString()
+        detailsNbElectricalTextView.text =
+            stationEntity.numBikesAvailableTypesElectrical.toString()
+        detailsLastReportedTextView.text = "Dernière mise à jour le : ${getDateTime(stationEntity.last_reported)}"
+        if (stationEntity.rental_methods) {
+            detailsRentalMethodsTextView.text = RENTAL_CREDIT_CARD_TEXT
         }
     }
 
@@ -142,6 +159,23 @@ class DetailsActivity : AppCompatActivity() {
         val stationIdLongFavorisEntity = FavorisEntity(stationIdThis)
         runBlocking {
             favorisDao.delete(stationIdLongFavorisEntity)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun getDateTime(timeStamp: Long): String {
+        val sdf = java.text.SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.FRANCE)
+        val date = Date(timeStamp * 1000)
+        return sdf.format(date)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            setContentView(R.layout.activity_details_land)
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            setContentView(R.layout.activity_details)
         }
     }
 }

@@ -7,5 +7,6 @@ data class StationDetails(
     val numDocksAvailable: Int,
     val is_installed: Int,
     val is_returning: Int,
-    val is_renting: Int
+    val is_renting: Int,
+    val last_reported: Long
 )

@@ -214,6 +214,24 @@
             android:layout_gravity="center_vertical"/>
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/rental_methods_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/light_green"
+            android:textSize="18sp"
+            android:layout_gravity="bottom|center"
+            android:layout_marginTop="10dp"
+            tools:text="hello 2" />
+    </LinearLayout>
+
+
     <ImageView
         android:id="@+id/details_velo_imageview"
         android:layout_width="100dp"
@@ -222,6 +240,21 @@
         android:layout_marginTop="80dp"
         android:contentDescription="@string/details_docks_picture_description"
         android:src="@drawable/im_velo" />
+
+    <TextView
+        android:id="@+id/details_last_reported_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="@color/light_green"
+        android:layout_gravity="bottom|center"
+        android:layout_marginTop="20dp"
+        tools:text="hello" />
+
+
+
+
+
 
 
 </LinearLayout>

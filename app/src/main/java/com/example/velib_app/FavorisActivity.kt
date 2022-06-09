@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.velib_app.bdd.FavorisDatabase
-import com.example.velib_app.bdd.StationDatabase
 import kotlinx.coroutines.runBlocking
 
 class FavorisActivity : AppCompatActivity() {
@@ -30,12 +29,10 @@ class FavorisActivity : AppCompatActivity() {
 
         val bddFavoris = FavorisDatabase.createDatabase(this)
         val favorisDao = bddFavoris.favorisDao()
-        val stationDatabase = StationDatabase.createDatabase(this)
         runBlocking {
             val getAllId: List<Long> = favorisDao.getAllId()
             recyclerView.adapter = FavorisAdapter(getAllId)
         }
-        stationDatabase.close()
         bddFavoris.close()
     }
 

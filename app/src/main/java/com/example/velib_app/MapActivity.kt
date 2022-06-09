@@ -11,6 +11,8 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.location.Location
 import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
@@ -19,13 +21,17 @@ import android.provider.Settings
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.*
+import android.view.View
+import android.view.animation.AnimationUtils
+import android.widget.CursorAdapter
+import android.widget.SearchView
+import android.widget.SimpleCursorAdapter
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import com.example.velib_app.api.StationService
-import com.example.velib_app.bdd.StationDao
 import com.example.velib_app.bdd.StationDatabase
 import com.example.velib_app.bdd.StationEntity
 import com.example.velib_app.model.Station
@@ -41,6 +47,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.maps.android.clustering.ClusterManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -53,6 +62,7 @@ private const val LOADING_TEXT: String = "Chargement des données des stations .
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val stations: MutableList<Station> = arrayListOf()
+    private var stationEntityList: MutableList<StationEntity> = mutableListOf()
     private val stationsTitle: MutableList<String> = mutableListOf()
 
     private val stationDetails: MutableList<StationDetails> = mutableListOf()
@@ -64,10 +74,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var mMap: GoogleMap
     lateinit var locationSearchView: SearchView
     lateinit var cursorAdapter: CursorAdapter
-    lateinit var clusterManager: ClusterManager<Station>
+    lateinit var clusterManager: ClusterManager<StationEntity>
     lateinit var mechanicalBikeFloatingActionButton: FloatingActionButton
     lateinit var eBikeFloatingActionButton: FloatingActionButton
-    lateinit var linearLayout: LinearLayout
+    lateinit var syncFloatingActionButton: FloatingActionButton
     private lateinit var checkNetworkConnection: CheckNetworkConnection
 
 
@@ -86,17 +96,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         mapView = findViewById(R.id.mapView)
         mapView.onCreate(mapViewBundle)
-
-//        val builder: AlertDialog.Builder = AlertDialog.Builder(this)
-//        builder.setCancelable(true)
-//        builder.setView(R.id.loading_linear_layout)
-
-         linearLayout = findViewById<LinearLayout>(R.id.loading_linear_layout)
-
-
-//        val dialog = builder.create()
-//
-//        dialog.show()
 
 
         // Fetching API_KEY which we wrapped
@@ -133,22 +132,56 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         eBikeFloatingActionButton = findViewById(R.id.ebike_floating_action_button)
 
-        val locationImageButton = findViewById<ImageButton>(R.id.location_image_button)
+        val locationFloatingActionButton = findViewById<FloatingActionButton>(R.id.location_image_button)
 
-        val syncImageButton = findViewById<ImageButton>(R.id.synchro_api_image_button)
+        syncFloatingActionButton = findViewById(R.id.synchro_api_image_button)
 
-        locationImageButton.setOnClickListener {
-            getLastLocation()
+        locationFloatingActionButton.setOnClickListener {
+            requestPermissions()
+            if (checkPermissions()) {
+                getLastLocation()
+            } else {
+                Toast.makeText(this, "Activez la localisation pour pouvoir utiliser ce bouton", Toast.LENGTH_SHORT).show()
+            }
         }
 
         mapView.getMapAsync(this)
 
-//        mapView.getMapAsync {
-//            mMap = it
-//
-//        }
+    }
 
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        if (isInternet(this)) {
+            synchroApi()
+        } else {
+            val stationDatabase = StationDatabase.createDatabase(this)
+            val stationDao = stationDatabase.stationDao()
+            runBlocking {
+                stationEntityList = stationDao.getAllStation()
+            }
+            mechanicalBikeFloatingActionButton.setOnClickListener {
+                Toast.makeText(this, "Activez votre connection internet pour utiliser ce bouton", Toast.LENGTH_SHORT).show()
+            }
+            syncFloatingActionButton.setOnClickListener {
+                Toast.makeText(this,
+                    "Activer votre connexion internet pour resynchroniser les données des stations",
+                    Toast.LENGTH_LONG).show()
+            }
+        }
+
+        if (stationEntityList.isNotEmpty()) {
+            setFloatingButtonsClickListenerIfStationsAvailable()
+        }
+        addClusteredMarkers(mMap, actionButtonBoolean)
+        configureSuggestions(locationSearchView, cursorAdapter)
+        getLastLocation()
+        callNetworkConnection()
+
+    }
+
+    private fun setFloatingButtonsClickListenerIfStationsAvailable() {
         mechanicalBikeFloatingActionButton.setOnClickListener {
+
             if (mechanicalBikeFloatingActionButton.backgroundTintList
                 == AppCompatResources.getColorStateList(this, R.color.marker_green)) {
                 mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
@@ -171,41 +204,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             manageActionButton(ActionButton.EBIKE)
             updateClusteredMarkers(mMap, actionButtonBoolean)
         }
-
-        syncImageButton.setOnClickListener {
-            synchroApi()
-        }
-
-//        mechanicalBikeFloatingActionButton.setOnClickListener {
-//            if (mechanicalBikeFloatingActionButton.backgroundTintList
-//                == AppCompatResources.getColorStateList(this, R.color.marker_green)) {
-//                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
-//            } else {
-//                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.marker_green)
-//                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
-//            }
-//
-//            manageActionButton(ActionButton.MECHANICAL)
-//            updateClusteredMarkers(mMap, actionButtonBoolean)
-//        }
-//
-//        eBikeFloatingActionButton.setOnClickListener {
-//            if (eBikeFloatingActionButton.backgroundTintList
-//                == AppCompatResources.getColorStateList(this, R.color.marker_blue)) {
-//                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
-//            } else {
-//                eBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.marker_blue)
-//                mechanicalBikeFloatingActionButton.backgroundTintList = AppCompatResources.getColorStateList(this, R.color.teal_200)
-//            }
-//            manageActionButton(ActionButton.EBIKE)
-//            updateClusteredMarkers(mMap, actionButtonBoolean)
-//        }
-    }
-
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        callNetworkConnection()
-        getLastLocation()
     }
 
     private fun manageActionButton(actionButton: ActionButton) {
@@ -250,6 +248,56 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 //        }
 //    }
 
+    private fun asynchroApi(view: View) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/")
+            .addConverterFactory(MoshiConverterFactory.create())
+            .build()
+            .create(StationService::class.java)
+
+
+        GlobalScope.launch(Dispatchers.IO) {
+            val stationsResult = retrofit.getStations()
+            val stationsDetailsResults = retrofit.getStationDetails()
+
+
+            val stationDatabase = StationDatabase.createDatabase(applicationContext)
+            val stationDao = stationDatabase.stationDao()
+
+            stationDao.deleteAllStations()
+
+            stationsResult.data.stations.zip(stationsDetailsResults.data.stations).map {
+                StationEntity(
+                    it.first.station_id,
+                    it.first.name,
+                    it.first.lat,
+                    it.first.lon,
+                    it.first.capacity,
+                    it.first.stationCode,
+                    it.second.numBikesAvailable,
+                    it.second.num_bikes_available_types[0]["mechanical"],
+                    it.second.num_bikes_available_types[1]["ebike"],
+                    it.second.numDocksAvailable,
+                    it.second.is_installed,
+                    it.second.is_returning,
+                    it.second.is_renting,
+                    it.second.last_reported,
+                    !it.first.rental_methods.isNullOrEmpty()
+                )
+            }.map {
+                stationDao.insertStation(it)
+                stationEntityList.add(it)
+            }
+
+            stationDatabase.close()
+            view.clearAnimation()
+        }
+
+        runOnUiThread {
+            updateClusteredMarkers(mMap, actionButtonBoolean)
+        }
+    }
+
     private fun synchroApi() {
 
         val retrofit = Retrofit.Builder()
@@ -265,33 +313,45 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d(TAG, "synchroApi: ${resultStation.data.stations}")
             Log.d(TAG, "synchroApi: ${resultStationDetails.data.stations}")
 
-            resultStation.data.stations.map {
-                stations.add(it)
-            }
-
-            resultStation.data.stations.map {
-                stationsTitle.add(it.name)
-            }
-
-            resultStationDetails.data.stations.map {
-                stationDetails.add(it)
-            }
-
             val stationDatabase = StationDatabase.createDatabase(applicationContext)
             val stationDao = stationDatabase.stationDao()
 
             stationDao.deleteAllStations()
 
+            resultStation.data.stations.zip(resultStationDetails.data.stations).map {
+                StationEntity(
+                    it.first.station_id,
+                    it.first.name,
+                    it.first.lat,
+                    it.first.lon,
+                    it.first.capacity,
+                    it.first.stationCode,
+                    it.second.numBikesAvailable,
+                    it.second.num_bikes_available_types[0]["mechanical"],
+                    it.second.num_bikes_available_types[1]["ebike"],
+                    it.second.numDocksAvailable,
+                    it.second.is_installed,
+                    it.second.is_returning,
+                    it.second.is_renting,
+                    it.second.last_reported,
+                    !it.first.rental_methods.isNullOrEmpty()
+                )
+            }.map {
+                stationDao.insertStation(it)
+                stationEntityList.add(it)
+            }
+
+            stationDatabase.close()
         }
 
     }
 
     private fun addClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
 
-        clusterManager = ClusterManager<Station>(this, googleMap)
-        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, stationDetails, actionButton)
+        clusterManager = ClusterManager<StationEntity>(this, googleMap)
+        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, actionButton)
 
-        clusterManager.addItems(stations)
+        clusterManager.addItems(stationEntityList)
         clusterManager.cluster()
 
         googleMap.setOnCameraIdleListener {
@@ -299,145 +359,75 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         clusterManager.setOnClusterItemClickListener {
-            val stationClicked = stations.find { station ->
-                it.title == station.name
-            }
-            val stationDetailsClicked = stationDetails.find {
-                it.station_id == stationClicked?.station_id
-            }
-            Log.d(TAG, "synchroApiClicked: $stationClicked")
-            Log.d(TAG, "synchroApiClickedDetails: $stationDetailsClicked")
 
-
-            if (stationClicked !== null && stationDetailsClicked !== null) {
-                val stationIdBdd: Long = stationClicked.station_id
-                val nameBdd = stationClicked.name
-                val numBikesAvailableBdd = stationDetailsClicked.numBikesAvailable
-                val numDocksAvailableBdd = stationDetailsClicked.numDocksAvailable
-                val capacityBdd = stationClicked.capacity
-                val numBikesAvailableTypesMechanicalBdd =
-                    stationDetailsClicked.num_bikes_available_types[0]["mechanical"]
-                val numBikesAvailableTypesElectricalBdd =
-                    stationDetailsClicked.num_bikes_available_types[1]["ebike"]
-                val stationCode = stationClicked.stationCode
-                val stationLat = stationClicked.lat
-                val stationLon = stationClicked.lon
-                val stationIsInstalled = stationDetailsClicked.is_installed
-                val stationIsReturning = stationDetailsClicked.is_returning
-                val stationIsRenting = stationDetailsClicked.is_renting
-
-                val stationDatabase = StationDatabase.createDatabase(this)
-                val stationDao = stationDatabase.stationDao()
-                if (!isStation(stationDao, stationIdBdd)) {
-                    insertStation(
-                        stationDao,
-                        stationIdBdd,
-                        nameBdd,
-                        stationLat,
-                        stationLon,
-                        capacityBdd,
-                        stationCode,
-                        numBikesAvailableBdd,
-                        numBikesAvailableTypesMechanicalBdd,
-                        numBikesAvailableTypesElectricalBdd,
-                        numDocksAvailableBdd,
-                        stationIsInstalled,
-                        stationIsReturning,
-                        stationIsRenting
-                    )
-                }
-                stationDatabase.close()
-            }
-
-            val stationId = stationClicked?.station_id.toString()
-            val name = stationClicked?.name
-            val numBikesAvailable = stationDetailsClicked?.numBikesAvailable.toString()
-            val numDocksAvailable = stationDetailsClicked?.numDocksAvailable.toString()
-            val capacity = stationClicked?.capacity.toString()
-            val numBikesAvailableTypesMechanical =
-                stationDetailsClicked?.num_bikes_available_types?.get(0)
-                    ?.get("mechanical")
-                    .toString()
-            val numBikesAvailableTypesElectrical =
-                stationDetailsClicked?.num_bikes_available_types?.get(1)
-                    ?.get("ebike")
-                    .toString()
+            val stationId = it.station_id.toString()
 
             val bundle = Bundle()
 
             bundle.putString("stationId", stationId)
-            bundle.putString("name", name)
-            bundle.putString("numBikes", numBikesAvailable)
-            bundle.putString("numDocks", numDocksAvailable)
-            bundle.putString("capacity", capacity)
-            bundle.putString("numBikesAvailableTypesMechanical", numBikesAvailableTypesMechanical)
-            bundle.putString("numBikesAvailableTypesElectrical", numBikesAvailableTypesElectrical)
-
-            Log.d(TAG, "synchroApiClickedName: $name")
             val intent = Intent(this, DetailsActivity::class.java)
             intent.putExtras(bundle)
             startActivity(intent)
             true
 
-
-//            val intent = Intent(this, FavorisActivity::class.java)
-//            startActivity(intent)
-//            true
-
         }
     }
 
-    private fun isStation(stationDao: StationDao, stationId: Long): Boolean {
-        var isStation: Boolean
-        runBlocking {
-            val findByStationIdFavorisStation: StationEntity =
-                stationDao.findByStationIdStation(stationId)
-            isStation = findByStationIdFavorisStation != null
-        }
-        return isStation
-    }
-
-    private fun insertStation(
-        stationDao: StationDao,
-        stationId: Long,
-        name: String?,
-        lat: Double?,
-        lon: Double?,
-        capacity: Int?,
-        stationCode: String?,
-        numBikesAvailable: Int?,
-        numBikesAvailableTypesMechanical: Int?,
-        numBikesAvailableTypesElectrical: Int?,
-        numDocksAvailable: Int?,
-        is_installed: Int?,
-        is_returning: Int?,
-        is_renting: Int?
-    ) {
-        val stationIdLongFavorisEntityStation = StationEntity(
-            stationId,
-            name,
-            lat,
-            lon,
-            capacity,
-            stationCode,
-            numBikesAvailable,
-            numBikesAvailableTypesMechanical,
-            numBikesAvailableTypesElectrical,
-            numDocksAvailable,
-            is_installed,
-            is_returning,
-            is_renting
-        )
-        runBlocking {
-            stationDao.insertStation(stationIdLongFavorisEntityStation)
-        }
-    
-    }
+//    private fun isStation(stationDao: StationDao, stationId: Long): Boolean {
+//        var isStation: Boolean
+//        runBlocking {
+//            val findByStationIdFavorisStation: StationEntity =
+//                stationDao.findByStationIdStation(stationId)
+//            isStation = findByStationIdFavorisStation != null
+//        }
+//        return isStation
+//    }
+//
+//    private fun insertStation(
+//        stationDao: StationDao,
+//        stationId: Long,
+//        name: String,
+//        lat: Double,
+//        lon: Double,
+//        capacity: Int,
+//        stationCode: String,
+//        numBikesAvailable: Int,
+//        numBikesAvailableTypesMechanical: Int?,
+//        numBikesAvailableTypesElectrical: Int?,
+//        numDocksAvailable: Int,
+//        is_installed: Int,
+//        is_returning: Int,
+//        is_renting: Int,
+//        last_reported: Long,
+//        rental_status: Boolean
+//    ) {
+//        val stationIdLongFavorisEntityStation = StationEntity(
+//            stationId,
+//            name,
+//            lat,
+//            lon,
+//            capacity,
+//            stationCode,
+//            numBikesAvailable,
+//            numBikesAvailableTypesMechanical,
+//            numBikesAvailableTypesElectrical,
+//            numDocksAvailable,
+//            is_installed,
+//            is_returning,
+//            is_renting,
+//            last_reported,
+//            rental_status
+//        )
+//        runBlocking {
+//            stationDao.insertStation(stationIdLongFavorisEntityStation)
+//        }
+//
+//    }
 
     private fun updateClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
-        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, stationDetails, actionButton)
+        clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, actionButton)
         clusterManager.clearItems()
-        clusterManager.addItems(stations)
+        clusterManager.addItems(stationEntityList)
         clusterManager.cluster()
     }
 
@@ -555,7 +545,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 searchView.clearFocus()
                 val notCaseSensitiveQuery: String? = query?.lowercase()
-                val stationFound = stations.find {
+                val stationFound = stationEntityList.find {
                     it.name.lowercase() == notCaseSensitiveQuery
                 }
                 Log.d(TAG, "$stationFound")
@@ -576,9 +566,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     MatrixCursor(arrayOf(BaseColumns._ID, SearchManager.SUGGEST_COLUMN_TEXT_1))
 
                 query?.let {
-                    stationsTitle.forEachIndexed { index, station ->
-                        if (station.contains(query, true)) {
-                            cursor.addRow(arrayOf(index, station))
+                    stationEntityList.forEachIndexed { index, station ->
+                        Log.d(TAG, station.name)
+                        if (station.name.contains(query, true)) {
+                            cursor.addRow(arrayOf(index, station.name))
                         }
                     }
                 }
@@ -663,90 +654,44 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         return true
     }
 
-//    private fun isInternet(context: Context): Boolean {
-//        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-//            if (capabilities != null) {
-//                return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-//                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-//                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-//            }
-//        }
-//        return false
-//    }
+    // check if there is internet during launch
+    private fun isInternet(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+            }
+        }
+        return false
+    }
 
+    // monitor internet activity when inside the app
     private fun callNetworkConnection() {
         checkNetworkConnection = CheckNetworkConnection(application)
         checkNetworkConnection.observe(this) { isConnected ->
+            Log.d(TAG, isConnected.toString())
             if (isConnected) {
-                if (stations.isEmpty()) {
+                if (stationEntityList.isEmpty()) {
                     synchroApi()
                     addClusteredMarkers(mMap, actionButtonBoolean)
                 }
-                configureSuggestions(locationSearchView, cursorAdapter)
+                syncFloatingActionButton.setOnClickListener {
+                    val rotation = AnimationUtils.loadAnimation(this, R.anim.ic_play_synchro_api)
+                    it.startAnimation(rotation)
+                    asynchroApi(it)
+                    // it.clearAnimation()
+                }
+            } else {
+                syncFloatingActionButton.setOnClickListener {
+                    Toast.makeText(this,
+                        "Activer votre connexion internet pour resynchroniser les données des stations",
+                        Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
-
-//    private fun setProgressDialog() {
-//
-//        // Creating a Linear Layout
-//        val llPadding = 30
-//        val ll = LinearLayout(this)
-//        ll.orientation = LinearLayout.HORIZONTAL
-//        ll.setPadding(llPadding, llPadding, llPadding, llPadding)
-//        ll.gravity = Gravity.CENTER
-//        var llParam = LinearLayout.LayoutParams(
-//            LinearLayout.LayoutParams.WRAP_CONTENT,
-//            LinearLayout.LayoutParams.WRAP_CONTENT
-//        )
-//        llParam.gravity = Gravity.CENTER
-//        ll.layoutParams = llParam
-//
-//        // Creating a ProgressBar inside the layout
-//        val progressBar = ProgressBar(this)
-//        progressBar.isIndeterminate = true
-//        progressBar.setPadding(0, 0, llPadding, 0)
-//        progressBar.layoutParams = llParam
-//        llParam = LinearLayout.LayoutParams(
-//            ViewGroup.LayoutParams.WRAP_CONTENT,
-//            ViewGroup.LayoutParams.WRAP_CONTENT
-//        )
-//        llParam.gravity = Gravity.CENTER
-//
-//        // Creating a TextView inside the layout
-//        val tvText = TextView(this)
-//        tvText.text = LOADING_TEXT
-//        tvText.setTextColor(Color.parseColor("#000000"))
-//        tvText.textSize = 20f
-//        tvText.layoutParams = llParam
-//        ll.addView(progressBar)
-//        ll.addView(tvText)
-//
-//        // Setting the AlertDialog Builder view
-//        // as the Linear layout created above
-//        val builder: AlertDialog.Builder = AlertDialog.Builder(this)
-//        builder.setCancelable(true)
-//        builder.setView(ll)
-//
-//        builder.show()
-//
-//        // Displaying the dialog
-//        val dialog: AlertDialog = builder.create()
-//        dialog.show()
-//
-//        val window: Window? = dialog.window
-//        if (window != null) {
-//            val layoutParams = WindowManager.LayoutParams()
-//            layoutParams.copyFrom(dialog.window?.attributes)
-//            layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
-//            layoutParams.height = LinearLayout.LayoutParams.WRAP_CONTENT
-//            dialog.window?.attributes = layoutParams
-//
-//            // Disabling screen touch to avoid exiting the Dialog
-//            window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
-//        }
-//    }
 
 }

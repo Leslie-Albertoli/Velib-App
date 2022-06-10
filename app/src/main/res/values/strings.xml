@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Velib-App</string>
-    <string name="api_key">AIzaSyDME_xIWig2edHHrUODZ09y6xwNzemdg9A</string>
     <string name="details_title_nb_bike">Nombre de vélos disponibles :</string>
     <string name="details_title_nb_place">Nombre de places disponibles :</string>
     <string name="details_title_capacity">Capacité de la station :</string>

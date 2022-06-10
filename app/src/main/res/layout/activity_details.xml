@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/details_xml"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -18,17 +16,13 @@
             android:id="@+id/details_station_name_textview"
             android:textStyle="bold"
             android:textAlignment="center"
-            android:textColor="#C43AB379"
+            android:textColor="@color/green_text"
             android:textSize="22sp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="25dp"
             android:layout_marginLeft="50dp"
-            android:layout_marginRight="50dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.050"/>
-        <!--android:textColor="#2C8A5D"-->
+            android:layout_marginRight="50dp" />
 
         <LinearLayout
             android:id="@+id/details_nb_bike_linearlayout"
@@ -36,10 +30,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:layout_marginLeft="25dp"
-            android:layout_marginRight="25dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/details_station_name_textview"
-            app:layout_constraintVertical_bias="0.050">
+            android:layout_marginRight="25dp">
 
             <ImageView
                 android:id="@+id/details_nb_bike_imageview"
@@ -56,13 +47,13 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_marginEnd="10dp"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:text="@string/details_title_nb_bike" />
 
             <TextView
                 android:id="@+id/details_nb_bike_textview"
                 android:textSize="18sp"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"/>
@@ -74,10 +65,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:layout_marginLeft="25dp"
-            android:layout_marginRight="25dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
-            app:layout_constraintVertical_bias="0.030">
+            android:layout_marginRight="25dp">
 
             <ImageView
                 android:id="@+id/details_nb_mechanical_imageview"
@@ -89,7 +77,7 @@
             <TextView
                 android:id="@+id/details_title_nb_mechanical_textview"
                 android:textStyle="bold"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="210dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -99,7 +87,7 @@
             <TextView
                 android:id="@+id/details_nb_mechanical_textview"
                 android:textSize="18sp"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"/>
@@ -111,10 +99,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:layout_marginLeft="25dp"
-            android:layout_marginRight="25dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
-            app:layout_constraintVertical_bias="0.030">
+            android:layout_marginRight="25dp">
 
             <ImageView
                 android:id="@+id/details_nb_electrical_imageview"
@@ -126,7 +111,7 @@
             <TextView
                 android:id="@+id/details_title_nb_electrical_textview"
                 android:textStyle="bold"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="210dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -136,7 +121,7 @@
             <TextView
                 android:id="@+id/details_nb_electrical_textview"
                 android:textSize="18sp"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"/>
@@ -148,10 +133,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:layout_marginLeft="25dp"
-            android:layout_marginRight="25dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
-            app:layout_constraintVertical_bias="0.030">
+            android:layout_marginRight="25dp">
 
             <ImageView
                 android:id="@+id/details_nb_place_imageview"
@@ -164,7 +146,7 @@
             <TextView
                 android:id="@+id/details_title_nb_place_textview"
                 android:textStyle="bold"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="210dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -174,7 +156,7 @@
             <TextView
                 android:id="@+id/details_nb_place_textview"
                 android:textSize="18sp"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"/>
@@ -186,10 +168,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:layout_marginLeft="25dp"
-            android:layout_marginRight="25dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/details_nb_bike_linearlayout"
-            app:layout_constraintVertical_bias="0.030">
+            android:layout_marginRight="25dp">
 
             <ImageView
                 android:id="@+id/details_capacity_imageview"
@@ -202,7 +181,7 @@
             <TextView
                 android:id="@+id/details_title_capacity_textview"
                 android:textStyle="bold"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="210dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -212,7 +191,7 @@
             <TextView
                 android:id="@+id/details_capacity_textview"
                 android:textSize="18sp"
-                android:textColor="#C43AB379"
+                android:textColor="@color/green_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"/>
@@ -232,8 +211,7 @@
                 android:textColor="@color/light_green"
                 android:textSize="14sp"
                 android:layout_gravity="bottom|center"
-                android:layout_marginTop="10dp"
-                tools:text="hello 2" />
+                android:layout_marginTop="10dp" />
         </LinearLayout>
 
 
@@ -253,8 +231,7 @@
             android:textSize="13sp"
             android:textColor="@color/light_green"
             android:layout_gravity="bottom|center"
-            android:layout_marginTop="20dp"
-            tools:text="hello" />
+            android:layout_marginTop="20dp" />
 
     </LinearLayout>
 </ScrollView>

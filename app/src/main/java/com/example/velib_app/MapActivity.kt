@@ -34,10 +34,9 @@ import androidx.core.app.ActivityCompat
 import com.example.velib_app.api.StationService
 import com.example.velib_app.bdd.StationDatabase
 import com.example.velib_app.bdd.StationEntity
-import com.example.velib_app.model.Station
-import com.example.velib_app.model.StationDetails
 import com.example.velib_app.utils.ActionButton
 import com.example.velib_app.utils.CheckNetworkConnection
+import com.example.velib_app.utils.isInternetOn
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -57,15 +56,11 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 private const val TAG = "MapActivity"
 private const val PERMISSION_ID = 42
 private const val MAPVIEW_BUNDLE_KEY: String = "MapViewBundleKey"
-private const val LOADING_TEXT: String = "Chargement des données des stations ..."
+
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
-    private val stations: MutableList<Station> = arrayListOf()
     private var stationEntityList: MutableList<StationEntity> = mutableListOf()
-    private val stationsTitle: MutableList<String> = mutableListOf()
-
-    private val stationDetails: MutableList<StationDetails> = mutableListOf()
     private var currentLocation: LatLng = LatLng(48.78896362751979, 2.3272018540134964)
     private var actionButtonBoolean = ActionButton.NONE
 
@@ -152,6 +147,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         if (isInternet(this)) {
+            isInternetOn = true
             synchroApi()
         } else {
             val stationDatabase = StationDatabase.createDatabase(this)
@@ -372,57 +368,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         }
     }
-
-//    private fun isStation(stationDao: StationDao, stationId: Long): Boolean {
-//        var isStation: Boolean
-//        runBlocking {
-//            val findByStationIdFavorisStation: StationEntity =
-//                stationDao.findByStationIdStation(stationId)
-//            isStation = findByStationIdFavorisStation != null
-//        }
-//        return isStation
-//    }
-//
-//    private fun insertStation(
-//        stationDao: StationDao,
-//        stationId: Long,
-//        name: String,
-//        lat: Double,
-//        lon: Double,
-//        capacity: Int,
-//        stationCode: String,
-//        numBikesAvailable: Int,
-//        numBikesAvailableTypesMechanical: Int?,
-//        numBikesAvailableTypesElectrical: Int?,
-//        numDocksAvailable: Int,
-//        is_installed: Int,
-//        is_returning: Int,
-//        is_renting: Int,
-//        last_reported: Long,
-//        rental_status: Boolean
-//    ) {
-//        val stationIdLongFavorisEntityStation = StationEntity(
-//            stationId,
-//            name,
-//            lat,
-//            lon,
-//            capacity,
-//            stationCode,
-//            numBikesAvailable,
-//            numBikesAvailableTypesMechanical,
-//            numBikesAvailableTypesElectrical,
-//            numDocksAvailable,
-//            is_installed,
-//            is_returning,
-//            is_renting,
-//            last_reported,
-//            rental_status
-//        )
-//        runBlocking {
-//            stationDao.insertStation(stationIdLongFavorisEntityStation)
-//        }
-//
-//    }
 
     private fun updateClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
         clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, actionButton)
@@ -672,8 +617,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun callNetworkConnection() {
         checkNetworkConnection = CheckNetworkConnection(application)
         checkNetworkConnection.observe(this) { isConnected ->
-            Log.d(TAG, isConnected.toString())
-            if (isConnected) {
+            isInternetOn = isConnected
+            if (isInternetOn) {
                 if (stationEntityList.isEmpty()) {
                     synchroApi()
                     addClusteredMarkers(mMap, actionButtonBoolean)
@@ -682,7 +627,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     val rotation = AnimationUtils.loadAnimation(this, R.anim.ic_play_synchro_api)
                     it.startAnimation(rotation)
                     asynchroApi(it)
-                    // it.clearAnimation()
                 }
             } else {
                 syncFloatingActionButton.setOnClickListener {

@@ -1,7 +1,6 @@
 package com.example.velib_app
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.view.Menu
@@ -12,6 +11,8 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import com.example.velib_app.bdd.*
+import com.example.velib_app.utils.CheckNetworkConnection
+import com.example.velib_app.utils.isInternetOn
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
@@ -24,12 +25,15 @@ class DetailsActivity : AppCompatActivity() {
     var menuActivity: Menu? = null
 
     lateinit var stationEntity: StationEntity
+    private lateinit var checkNetworkConnection: CheckNetworkConnection
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_details)
+
+        callNetworkConnection()
 
         val detailsStationNameTextView = findViewById<TextView>(R.id.details_station_name_textview)
         val detailsNbBikeTextView = findViewById<TextView>(R.id.details_nb_bike_textview)
@@ -61,7 +65,7 @@ class DetailsActivity : AppCompatActivity() {
             stationEntity.numBikesAvailableTypesMechanical.toString()
         detailsNbElectricalTextView.text =
             stationEntity.numBikesAvailableTypesElectrical.toString()
-        detailsLastReportedTextView.text = "Dernière mise à jour le : ${getDateTime(stationEntity.last_reported)}"
+        detailsLastReportedTextView.text = getString(R.string.last_updated_station_date, getDateTime(stationEntity.last_reported))
         if (stationEntity.rental_methods) {
             detailsRentalMethodsTextView.text = RENTAL_CREDIT_CARD_TEXT
         }
@@ -162,20 +166,16 @@ class DetailsActivity : AppCompatActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun getDateTime(timeStamp: Long): String {
         val sdf = java.text.SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.FRANCE)
         val date = Date(timeStamp * 1000)
         return sdf.format(date)
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            setContentView(R.layout.activity_details_land)
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setContentView(R.layout.activity_details)
+    private fun callNetworkConnection() {
+        checkNetworkConnection = CheckNetworkConnection(application)
+        checkNetworkConnection.observe(this) { isConnected ->
+            isInternetOn = isConnected
         }
     }
 }

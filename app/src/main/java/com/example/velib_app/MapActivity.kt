@@ -254,7 +254,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                         it.second.is_returning,
                         it.second.is_renting,
                         it.second.last_reported,
-                        !it.first.rental_methods.isNullOrEmpty()
+                        !it.first.rentalMethods.isNullOrEmpty()
                     )
                 }.forEach { stationEntity: StationEntity ->
                     if (stationEntity.is_installed == 1) {
@@ -318,7 +318,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     it.second.is_returning,
                     it.second.is_renting,
                     it.second.last_reported,
-                    !it.first.rental_methods.isNullOrEmpty()
+                    !it.first.rentalMethods.isNullOrEmpty()
                 )
             }.forEach { stationEntity ->
                 if (stationEntity.is_installed == 1) {

@@ -18,7 +18,6 @@ import android.os.Bundle
 import android.os.Looper
 import android.provider.BaseColumns
 import android.provider.Settings
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -46,14 +45,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.maps.android.clustering.ClusterManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
-private const val TAG = "MapActivity"
 private const val PERMISSION_ID = 42
 private const val MAPVIEW_BUNDLE_KEY: String = "MapViewBundleKey"
 
@@ -139,9 +134,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 Toast.makeText(this, "Activez la localisation pour pouvoir utiliser ce bouton", Toast.LENGTH_SHORT).show()
             }
         }
-
         mapView.getMapAsync(this)
 
+        mapView.setOnClickListener {
+            locationSearchView.clearFocus()
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -175,6 +172,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+    // click listener setup of the filtering action buttons
     private fun setFloatingButtonsClickListenerIfStationsAvailable() {
         mechanicalBikeFloatingActionButton.setOnClickListener {
 
@@ -202,6 +200,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // manage Filtering action buttons at the top of the mapView below the search view
     private fun manageActionButton(actionButton: ActionButton) {
         actionButtonBoolean = when(actionButtonBoolean) {
             ActionButton.NONE -> {
@@ -216,34 +215,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // pour faire les requetes API de manière asynchrone mais n'update pas l'UI dès que l'appel est terminé...
-//    val retrofit = Retrofit.Builder()
-//        .baseUrl("https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/")
-//        .addConverterFactory(MoshiConverterFactory.create())
-//        .build()
-//        .create(StationService::class.java)
-//
-//
-//    GlobalScope.launch(Dispatchers.IO) {
-//        val stationsResult = retrofit.getStations()
-//        val stationsDetailsResults = retrofit.getStationDetails()
-//        if (stationsResult.isSuccessful) {
-//            stationsResult.body()?.data?.stations?.map {
-//                stations.add(it)
-//            }
-//
-//            stationsResult.body()?.data?.stations?.map {
-//                stationsTitle.add(it.name)
-//            }
-//        }
-//
-//        if (stationsDetailsResults.isSuccessful) {
-//            stationsDetailsResults.body()?.data?.stations?.map {
-//                stationDetails.add(it)
-//            }
-//        }
-//    }
-
+    // Asynchronous API call to update stations data and markers
     private fun asynchroApi(view: View) {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/")
@@ -280,20 +252,30 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     it.second.last_reported,
                     !it.first.rental_methods.isNullOrEmpty()
                 )
-            }.map {
-                stationDao.insertStation(it)
-                stationEntityList.add(it)
+            }.forEach { stationEntity: StationEntity ->
+                if (stationEntity.is_installed == 1) {
+                    stationDao.insertStation(stationEntity)
+                    stationEntityList.add(stationEntity)
+                }
             }
 
             stationDatabase.close()
             view.clearAnimation()
+
+            withContext(Dispatchers.Main) {
+                Toast.makeText(applicationContext,
+                    "Synchronisation terminé. Les stations ont été actualisées",
+                    Toast.LENGTH_SHORT).show()
+                updateClusteredMarkers(mMap, actionButtonBoolean)
+            }
         }
 
-        runOnUiThread {
-            updateClusteredMarkers(mMap, actionButtonBoolean)
-        }
+
+
+
     }
 
+    // Synchronous API call and store data in database and stationEntityList
     private fun synchroApi() {
 
         val retrofit = Retrofit.Builder()
@@ -306,8 +288,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         runBlocking {
             val resultStation = service.getStations()
             val resultStationDetails = service.getStationDetails()
-            Log.d(TAG, "synchroApi: ${resultStation.data.stations}")
-            Log.d(TAG, "synchroApi: ${resultStationDetails.data.stations}")
 
             val stationDatabase = StationDatabase.createDatabase(applicationContext)
             val stationDao = stationDatabase.stationDao()
@@ -332,9 +312,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     it.second.last_reported,
                     !it.first.rental_methods.isNullOrEmpty()
                 )
-            }.map {
-                stationDao.insertStation(it)
-                stationEntityList.add(it)
+            }.forEach { stationEntity ->
+                if (stationEntity.is_installed == 1) {
+                    stationDao.insertStation(stationEntity)
+                    stationEntityList.add(stationEntity)
+                }
             }
 
             stationDatabase.close()
@@ -342,6 +324,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+    // add markers on mapView
     private fun addClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
 
         clusterManager = ClusterManager<StationEntity>(this, googleMap)
@@ -369,6 +352,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // update markers on map
     private fun updateClusteredMarkers(googleMap: GoogleMap, actionButton: ActionButton) {
         clusterManager.renderer = StationRenderer(this, googleMap, clusterManager, actionButton)
         clusterManager.clearItems()
@@ -409,6 +393,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // if mFusedLocationClient is not initialized or last location not found
     @SuppressLint("MissingPermission")
     private fun requestNewLocationData() {
         val mLocationRequest = LocationRequest()
@@ -484,6 +469,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // configure suggestions when searching a station
     private fun configureSuggestions(searchView: SearchView, cursorAdapter: CursorAdapter) {
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -493,7 +479,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 val stationFound = stationEntityList.find {
                     it.name.lowercase() == notCaseSensitiveQuery
                 }
-                Log.d(TAG, "$stationFound")
                 if (stationFound !== null) {
                     mMap.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(
@@ -512,7 +497,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 query?.let {
                     stationEntityList.forEachIndexed { index, station ->
-                        Log.d(TAG, station.name)
                         if (station.name.contains(query, true)) {
                             cursor.addRow(arrayOf(index, station.name))
                         }
@@ -542,6 +526,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         })
     }
 
+    // get saved state of the mapView if it exists
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
@@ -613,7 +598,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         return false
     }
 
-    // monitor internet activity when inside the app
+    // monitor internet activity when inside the activity
     private fun callNetworkConnection() {
         checkNetworkConnection = CheckNetworkConnection(application)
         checkNetworkConnection.observe(this) { isConnected ->
@@ -637,5 +622,4 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
-
 }

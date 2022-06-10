@@ -16,15 +16,11 @@ import com.example.velib_app.utils.isInternetOn
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
-private const val TAG = "DetailsActivity"
-private const val RENTAL_CREDIT_CARD_TEXT = "Paiement disponible par carte de crédit"
-//astuce : ctrl + alt + L pour réaligner tout le code
-
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
     var menuActivity: Menu? = null
 
-    lateinit var stationEntity: StationEntity
+    private lateinit var stationEntity: StationEntity
     private lateinit var checkNetworkConnection: CheckNetworkConnection
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -54,7 +50,7 @@ class DetailsActivity : AppCompatActivity() {
         }
 
         runBlocking {
-            stationEntity = stationDao.findByStationIdStation(stationIdThis)
+            stationEntity = stationDao.findStationByStationId(stationIdThis)
         }
 
         detailsStationNameTextView.text = stationEntity.name
@@ -67,7 +63,7 @@ class DetailsActivity : AppCompatActivity() {
             stationEntity.numBikesAvailableTypesElectrical.toString()
         detailsLastReportedTextView.text = getString(R.string.last_updated_station_date, getDateTime(stationEntity.last_reported))
         if (stationEntity.rental_methods) {
-            detailsRentalMethodsTextView.text = RENTAL_CREDIT_CARD_TEXT
+            detailsRentalMethodsTextView.text = getString(R.string.rental_status_credit_card)
         }
     }
 
@@ -166,12 +162,14 @@ class DetailsActivity : AppCompatActivity() {
         }
     }
 
+    // return date string from unix timestamp in seconds
     private fun getDateTime(timeStamp: Long): String {
         val sdf = java.text.SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.FRANCE)
         val date = Date(timeStamp * 1000)
         return sdf.format(date)
     }
 
+    // monitor internet connection in activity
     private fun callNetworkConnection() {
         checkNetworkConnection = CheckNetworkConnection(application)
         checkNetworkConnection.observe(this) { isConnected ->

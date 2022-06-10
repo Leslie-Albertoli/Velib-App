@@ -217,7 +217,7 @@
                 android:id="@+id/details_title_capacity_textview"
                 android:textStyle="bold"
                 android:textColor="#C43AB379"
-                android:layout_weight="0.62"
+                android:layout_weight="0.63"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -227,7 +227,7 @@
             <TextView
                 android:id="@+id/details_capacity_textview"
                 android:textSize="18sp"
-                android:layout_weight="1.66"
+                android:layout_weight="1.65"
                 android:textColor="#C43AB379"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

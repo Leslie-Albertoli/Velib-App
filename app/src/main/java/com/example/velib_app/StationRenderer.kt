@@ -33,9 +33,6 @@ class StationRenderer(
 
     override fun onBeforeClusterItemRendered(item: StationEntity, markerOptions: MarkerOptions) {
         iconGenerator.setContentView(inflatedView)
-//        val stationDetails: StationEntity = stationEntityList.find {
-//            it.station_id == item.station_id
-//        }
 
         when(actionButton) {
             ActionButton.MECHANICAL -> {
@@ -56,27 +53,6 @@ class StationRenderer(
                 iconGenerator.setBackground(drawableDefault)
             }
         }
-//        if (stationDetails !== null) {
-//            when(actionButton) {
-//                ActionButton.MECHANICAL -> {
-//                    textView.text =
-//                        stationDetails.num_bikes_available_types[0]["mechanical"].toString()
-//                    frameLayout.background = drawableMechanical
-//                    iconGenerator.setBackground(drawableMechanical)
-//                }
-//                ActionButton.EBIKE -> {
-//                    textView.text =
-//                        stationDetails.num_bikes_available_types[1]["ebike"].toString()
-//                    frameLayout.background = drawableEbike
-//                    iconGenerator.setBackground(drawableEbike)
-//                }
-//
-//                ActionButton.NONE -> {
-//                    textView.text = stationDetails.numBikesAvailable.toString()
-//                    iconGenerator.setBackground(drawableDefault)
-//                }
-//            }
-//        }
 
         markerOptions
             .position(LatLng(item.lat, item.lon))
@@ -86,9 +62,4 @@ class StationRenderer(
     override fun onClusterItemRendered(clusterItem: StationEntity, marker: Marker) {
         marker.tag = null
     }
-
-
-
-
-
 }

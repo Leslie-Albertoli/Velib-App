@@ -15,4 +15,7 @@
     <string name="yes">Oui</string>
     <string name="no">Non</string>
     <string name="filled_star_image_description">logo_favoris_plein</string>
+    <string name="mechanical_bike_picture_description">mechanical_bike</string>
+    <string name="last_updated_station_date">Dernière mise à jour le : %1$s</string>
+    <string name="rental_status_credit_card">"Paiement disponible par carte de crédit"</string>
 </resources>

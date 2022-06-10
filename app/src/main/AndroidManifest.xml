@@ -27,6 +27,8 @@
             android:name=".MapActivity"
             android:exported="true"
             android:theme="@style/VelibApp.SplashScreenTheme"
+            android:hardwareAccelerated="false"
+            android:largeHeap="true"
             android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

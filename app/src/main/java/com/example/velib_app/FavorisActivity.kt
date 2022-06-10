@@ -9,10 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.velib_app.bdd.FavorisDatabase
-import com.example.velib_app.bdd.StationDatabase
+import com.example.velib_app.utils.CheckNetworkConnection
 import kotlinx.coroutines.runBlocking
 
 class FavorisActivity : AppCompatActivity() {
+
+    private lateinit var checkNetworkConnection: CheckNetworkConnection
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,18 +32,18 @@ class FavorisActivity : AppCompatActivity() {
 
         val bddFavoris = FavorisDatabase.createDatabase(this)
         val favorisDao = bddFavoris.favorisDao()
-        val stationDatabase = StationDatabase.createDatabase(this)
         runBlocking {
             val getAllId: List<Long> = favorisDao.getAllId()
             recyclerView.adapter = FavorisAdapter(getAllId)
         }
-        stationDatabase.close()
         bddFavoris.close()
     }
 
     override fun onResume() {
         super.onResume()
         setContentView(R.layout.activity_favoris)
+
+        callNetworkConnection()
 
         val recyclerView =
             findViewById<RecyclerView>(R.id.list_clients_recyclerview)
@@ -92,5 +94,12 @@ class FavorisActivity : AppCompatActivity() {
             }
         }
         return true
+    }
+
+    private fun callNetworkConnection() {
+        checkNetworkConnection = CheckNetworkConnection(application)
+        checkNetworkConnection.observe(this) { isConnected ->
+            isInternetOn = isConnected
+        }
     }
 }

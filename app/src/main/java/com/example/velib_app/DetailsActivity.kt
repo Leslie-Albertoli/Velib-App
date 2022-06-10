@@ -1,30 +1,34 @@
 package com.example.velib_app
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import com.example.velib_app.bdd.FavorisDao
-import com.example.velib_app.bdd.FavorisDatabase
-import com.example.velib_app.bdd.FavorisEntity
+import com.example.velib_app.bdd.*
+import com.example.velib_app.utils.CheckNetworkConnection
 import kotlinx.coroutines.runBlocking
-
-private const val TAG = "DetailsActivity"
-
-//astuce : ctrl + alt + L pour réaligner tout le code
+import java.util.*
 
 class DetailsActivity : AppCompatActivity() {
     var stationIdThis: Long = -1
     var menuActivity: Menu? = null
 
+    private lateinit var stationEntity: StationEntity
+    private lateinit var checkNetworkConnection: CheckNetworkConnection
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_details)
+
+        callNetworkConnection()
 
         val detailsStationNameTextView = findViewById<TextView>(R.id.details_station_name_textview)
         val detailsNbBikeTextView = findViewById<TextView>(R.id.details_nb_bike_textview)
@@ -34,19 +38,31 @@ class DetailsActivity : AppCompatActivity() {
             findViewById<TextView>(R.id.details_nb_mechanical_textview)
         val detailsNbElectricalTextView =
             findViewById<TextView>(R.id.details_nb_electrical_textview)
+        val detailsLastReportedTextView = findViewById<TextView>(R.id.details_last_reported_text_view)
+        val detailsRentalMethodsTextView = findViewById<TextView>(R.id.rental_methods_text_view)
 
         val bundle = intent.extras
-
+        val stationDatabase = StationDatabase.createDatabase(this)
+        val stationDao = stationDatabase.stationDao()
         if (bundle !== null) {
             stationIdThis = bundle.getString("stationId")?.toLong() ?: -1
-            detailsStationNameTextView.text = bundle.getString("name")
-            detailsNbBikeTextView.text = bundle.getString("numBikes")
-            detailsNbPlaceTextView.text = bundle.getString("numDocks")
-            detailsCapacityTextView.text = bundle.getString("capacity")
-            detailsNbMechanicalTextView.text =
-                bundle.getString("numBikesAvailableTypesMechanical")
-            detailsNbElectricalTextView.text =
-                bundle.getString("numBikesAvailableTypesElectrical")
+        }
+
+        runBlocking {
+            stationEntity = stationDao.findStationByStationId(stationIdThis)
+        }
+
+        detailsStationNameTextView.text = stationEntity.name
+        detailsNbBikeTextView.text = stationEntity.numBikesAvailable.toString()
+        detailsNbPlaceTextView.text = stationEntity.numDocksAvailable.toString()
+        detailsCapacityTextView.text = stationEntity.capacity.toString()
+        detailsNbMechanicalTextView.text =
+            stationEntity.numBikesAvailableTypesMechanical.toString()
+        detailsNbElectricalTextView.text =
+            stationEntity.numBikesAvailableTypesElectrical.toString()
+        detailsLastReportedTextView.text = getString(R.string.last_updated_station_date, getDateTime(stationEntity.last_reported))
+        if (stationEntity.rental_methods) {
+            detailsRentalMethodsTextView.text = getString(R.string.rental_status_credit_card)
         }
     }
 
@@ -142,6 +158,21 @@ class DetailsActivity : AppCompatActivity() {
         val stationIdLongFavorisEntity = FavorisEntity(stationIdThis)
         runBlocking {
             favorisDao.delete(stationIdLongFavorisEntity)
+        }
+    }
+
+    // return date string from unix timestamp in seconds
+    private fun getDateTime(timeStamp: Long): String {
+        val sdf = java.text.SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.FRANCE)
+        val date = Date(timeStamp * 1000)
+        return sdf.format(date)
+    }
+
+    // monitor internet connection in activity
+    private fun callNetworkConnection() {
+        checkNetworkConnection = CheckNetworkConnection(application)
+        checkNetworkConnection.observe(this) { isConnected ->
+            isInternetOn = isConnected
         }
     }
 }

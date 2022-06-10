@@ -3,7 +3,6 @@ package com.example.velib_app
 import android.content.Intent
 import android.os.Build
 import android.text.Html
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,8 +14,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.example.velib_app.bdd.*
 import kotlinx.coroutines.runBlocking
-
-private const val TAG = "FavorisAdapter"
 
 class FavorisAdapter(private val favorisList: List<Long>) :
     RecyclerView.Adapter<FavorisAdapter.FavorisViewHolder>() {
@@ -32,7 +29,6 @@ class FavorisAdapter(private val favorisList: List<Long>) :
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onBindViewHolder(holder: FavorisViewHolder, position: Int) {
         val favoris = favorisList[position] //kotlin list ~ tableau
-        Log.d(TAG, "favorisList: $favorisList")
         val favorisTextview =
             holder.view.findViewById<TextView>(R.id.adapter_station_name_textview)
         val favorisImageview =
@@ -43,25 +39,21 @@ class FavorisAdapter(private val favorisList: List<Long>) :
         val stationDatabase = StationDatabase.createDatabase(context)
         val stationDao = stationDatabase.stationDao()
 
-        favorisTextview.text = "${findByStationIdStation(stationDao, favoris)?.name}"
-        stationDatabase.close()
+        favorisTextview.text = "${findStationByStationId(stationDao, favoris)?.name}"
 
         holder.view.setOnClickListener {
-            val context = it.context
-            val stationDatabase = StationDatabase.createDatabase(context)
-            val stationDao = stationDatabase.stationDao()
-            val stationId = findByStationIdStation(stationDao, favoris)?.station_id.toString()
-            val name = findByStationIdStation(stationDao, favoris)?.name
+            val stationId = findStationByStationId(stationDao, favoris)?.station_id.toString()
+            val name = findStationByStationId(stationDao, favoris)?.name
             val numBikesAvailable =
-                findByStationIdStation(stationDao, favoris)?.numBikesAvailable.toString()
+                findStationByStationId(stationDao, favoris)?.numBikesAvailable.toString()
             val numDocksAvailable =
-                findByStationIdStation(stationDao, favoris)?.numDocksAvailable.toString()
-            val capacity = findByStationIdStation(stationDao, favoris)?.capacity.toString()
-            val numBikesAvailableTypesMechanical = findByStationIdStation(
+                findStationByStationId(stationDao, favoris)?.numDocksAvailable.toString()
+            val capacity = findStationByStationId(stationDao, favoris)?.capacity.toString()
+            val numBikesAvailableTypesMechanical = findStationByStationId(
                 stationDao,
                 favoris
             )?.numBikesAvailableTypesMechanical.toString()
-            val numBikesAvailableTypesElectrical = findByStationIdStation(
+            val numBikesAvailableTypesElectrical = findStationByStationId(
                 stationDao,
                 favoris
             )?.numBikesAvailableTypesElectrical.toString()
@@ -94,9 +86,9 @@ class FavorisAdapter(private val favorisList: List<Long>) :
         val context = view.context
         val stationDatabase = StationDatabase.createDatabase(context)
         val stationDao = stationDatabase.stationDao()
-        val stationId = findByStationIdStation(stationDao, favoris)?.station_id
+        val stationId = findStationByStationId(stationDao, favoris)?.station_id
 
-        val findByStationIdStation = findByStationIdStation(stationDao, favoris)?.name
+        val findStationByStationId = findStationByStationId(stationDao, favoris)?.name
 
         stationDatabase.close()
 
@@ -104,7 +96,7 @@ class FavorisAdapter(private val favorisList: List<Long>) :
             .setTitle(R.string.confirm_delete_dialog_title)
             .setMessage(
                 Html.fromHtml(
-                    "Voulez-vous vraiment supprimer la station <i>${findByStationIdStation}</i> de votre liste des favoris ? Cette action est irréversible !",
+                    "Voulez-vous vraiment supprimer la station <i>${findStationByStationId}</i> de votre liste des favoris ? Cette action est irréversible !",
                     Html.FROM_HTML_MODE_LEGACY
                 )
             )
@@ -117,14 +109,14 @@ class FavorisAdapter(private val favorisList: List<Long>) :
                     if (!isFavoris(favorisDao, stationId)) {
                         favorisImageview.setImageResource(R.drawable.im_favoris_star_on)
                         insertFavoris(favorisDao, stationId)
-                        Toast.makeText(context, "Favoris ajouté", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Favoris ajouté", Toast.LENGTH_SHORT).show()
                     } else {
                         deleteFavoris(favorisDao, stationId)
                         val deletePosition: Int = holder.adapterPosition
                         (favorisList as ArrayList).removeAt(deletePosition)
                         notifyItemRemoved(deletePosition)
                         notifyItemRangeChanged(deletePosition, favorisList.size)
-                        Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Favoris supprimé", Toast.LENGTH_SHORT).show()
                     }
                     bddFavoris.close()
                 }
@@ -136,8 +128,8 @@ class FavorisAdapter(private val favorisList: List<Long>) :
 
     override fun getItemCount() = favorisList.size
 
-    fun isFavoris(favorisDao: FavorisDao, stationId: Long): Boolean {
-        var isFavoris = false
+    private fun isFavoris(favorisDao: FavorisDao, stationId: Long): Boolean {
+        var isFavoris: Boolean
         runBlocking {
             val findByStationIdFavoris: FavorisEntity = favorisDao.findByStationId(stationId)
             isFavoris = findByStationIdFavoris != null
@@ -145,24 +137,24 @@ class FavorisAdapter(private val favorisList: List<Long>) :
         return isFavoris
     }
 
-    fun insertFavoris(favorisDao: FavorisDao, stationId: Long) {
+    private fun insertFavoris(favorisDao: FavorisDao, stationId: Long) {
         val stationIdLongFavorisEntity = FavorisEntity(stationId)
         runBlocking {
             favorisDao.insert(stationIdLongFavorisEntity)
         }
     }
 
-    fun deleteFavoris(favorisDao: FavorisDao, stationId: Long) {
+    private fun deleteFavoris(favorisDao: FavorisDao, stationId: Long) {
         val stationIdLongFavorisEntity = FavorisEntity(stationId)
         runBlocking {
             favorisDao.delete(stationIdLongFavorisEntity)
         }
     }
 
-    fun findByStationIdStation(stationDao: StationDao, stationId: Long): StationEntity? {
+    private fun findStationByStationId(stationDao: StationDao, stationId: Long): StationEntity? {
         var station: StationEntity?
         runBlocking {
-            station = stationDao.findByStationIdStation(stationId)
+            station = stationDao.findStationByStationId(stationId)
         }
         return station
     }

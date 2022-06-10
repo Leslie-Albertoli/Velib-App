@@ -9,7 +9,8 @@ data class Station(
     val lat: Double,
     val lon: Double,
     val capacity: Int,
-    val stationCode: String
+    val stationCode: String,
+    val rentalMethods: List<String>
 ): ClusterItem {
 
     override fun getPosition(): LatLng = LatLng(lat, lon)

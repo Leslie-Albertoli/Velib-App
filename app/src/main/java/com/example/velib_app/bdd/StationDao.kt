@@ -8,10 +8,13 @@ import androidx.room.Query
 @Dao
 interface StationDao {
     @Query("SELECT * FROM station")
-    suspend fun getAllStation(): List<StationEntity>
+    suspend fun getAllStation(): MutableList<StationEntity>
 
     @Query("SELECT * FROM station WHERE station_id == :station_id_var")
-    suspend fun findByStationIdStation(station_id_var: Long): StationEntity
+    suspend fun findStationByStationId(station_id_var: Long): StationEntity
+
+    @Query("DELETE FROM station")
+    suspend fun deleteAllStations()
 
     @Insert
     suspend fun insertStation(vararg station: StationEntity)

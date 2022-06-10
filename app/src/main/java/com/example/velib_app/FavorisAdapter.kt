@@ -3,7 +3,6 @@ package com.example.velib_app
 import android.content.Intent
 import android.os.Build
 import android.text.Html
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,8 +14,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.example.velib_app.bdd.*
 import kotlinx.coroutines.runBlocking
-
-private const val TAG = "FavorisAdapter"
 
 class FavorisAdapter(private val favorisList: List<Long>) :
     RecyclerView.Adapter<FavorisAdapter.FavorisViewHolder>() {
@@ -32,7 +29,6 @@ class FavorisAdapter(private val favorisList: List<Long>) :
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onBindViewHolder(holder: FavorisViewHolder, position: Int) {
         val favoris = favorisList[position] //kotlin list ~ tableau
-        Log.d(TAG, "favorisList: $favorisList")
         val favorisTextview =
             holder.view.findViewById<TextView>(R.id.adapter_station_name_textview)
         val favorisImageview =

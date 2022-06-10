@@ -12,7 +12,6 @@ import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import com.example.velib_app.bdd.*
 import com.example.velib_app.utils.CheckNetworkConnection
-import com.example.velib_app.utils.isInternetOn
 import kotlinx.coroutines.runBlocking
 import java.util.*
 

@@ -35,7 +35,6 @@ import com.example.velib_app.bdd.StationDatabase
 import com.example.velib_app.bdd.StationEntity
 import com.example.velib_app.utils.ActionButton
 import com.example.velib_app.utils.CheckNetworkConnection
-import com.example.velib_app.utils.isInternetOn
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -51,23 +50,24 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 private const val PERMISSION_ID = 42
 private const val MAPVIEW_BUNDLE_KEY: String = "MapViewBundleKey"
-
+var isInternetOn: Boolean = false
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var stationEntityList: MutableList<StationEntity> = mutableListOf()
     private var currentLocation: LatLng = LatLng(48.78896362751979, 2.3272018540134964)
     private var actionButtonBoolean = ActionButton.NONE
+    private var currentJob: Job? = null
 
-    lateinit var mapView: MapView
-    lateinit var mFusedLocationClient: FusedLocationProviderClient
-    lateinit var mMap: GoogleMap
-    lateinit var locationSearchView: SearchView
-    lateinit var cursorAdapter: CursorAdapter
-    lateinit var clusterManager: ClusterManager<StationEntity>
-    lateinit var mechanicalBikeFloatingActionButton: FloatingActionButton
-    lateinit var eBikeFloatingActionButton: FloatingActionButton
-    lateinit var syncFloatingActionButton: FloatingActionButton
+    private lateinit var mapView: MapView
+    private lateinit var mFusedLocationClient: FusedLocationProviderClient
+    private lateinit var mMap: GoogleMap
+    private lateinit var locationSearchView: SearchView
+    private lateinit var cursorAdapter: CursorAdapter
+    private lateinit var clusterManager: ClusterManager<StationEntity>
+    private lateinit var mechanicalBikeFloatingActionButton: FloatingActionButton
+    private lateinit var eBikeFloatingActionButton: FloatingActionButton
+    private lateinit var syncFloatingActionButton: FloatingActionButton
     private lateinit var checkNetworkConnection: CheckNetworkConnection
 
 
@@ -126,6 +126,15 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         syncFloatingActionButton = findViewById(R.id.synchro_api_image_button)
 
+        syncFloatingActionButton.setOnClickListener {
+            val rotation = AnimationUtils.loadAnimation(this, R.anim.ic_play_synchro_api)
+            it.startAnimation(rotation)
+            if (currentJob !== null) {
+                currentJob!!.cancel(null)
+            }
+            asynchroApi(this, it)
+        }
+
         locationFloatingActionButton.setOnClickListener {
             requestPermissions()
             if (checkPermissions()) {
@@ -155,11 +164,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             mechanicalBikeFloatingActionButton.setOnClickListener {
                 Toast.makeText(this, "Activez votre connection internet pour utiliser ce bouton", Toast.LENGTH_SHORT).show()
             }
-            syncFloatingActionButton.setOnClickListener {
-                Toast.makeText(this,
-                    "Activer votre connexion internet pour resynchroniser les données des stations",
-                    Toast.LENGTH_LONG).show()
-            }
         }
 
         if (stationEntityList.isNotEmpty()) {
@@ -169,7 +173,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         configureSuggestions(locationSearchView, cursorAdapter)
         getLastLocation()
         callNetworkConnection()
-
     }
 
     // click listener setup of the filtering action buttons
@@ -216,63 +219,68 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     // Asynchronous API call to update stations data and markers
-    private fun asynchroApi(view: View) {
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun asynchroApi(context: Context, view: View) {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/")
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
             .create(StationService::class.java)
 
+        if (isInternetOn) {
+            currentJob = GlobalScope.launch(Dispatchers.IO) {
+                val stationsResult = retrofit.getStations()
+                val stationsDetailsResults = retrofit.getStationDetails()
 
-        GlobalScope.launch(Dispatchers.IO) {
-            val stationsResult = retrofit.getStations()
-            val stationsDetailsResults = retrofit.getStationDetails()
 
+                val stationDatabase = StationDatabase.createDatabase(applicationContext)
+                val stationDao = stationDatabase.stationDao()
 
-            val stationDatabase = StationDatabase.createDatabase(applicationContext)
-            val stationDao = stationDatabase.stationDao()
+                stationDao.deleteAllStations()
 
-            stationDao.deleteAllStations()
+                stationsResult.data.stations.zip(stationsDetailsResults.data.stations).map {
+                    StationEntity(
+                        it.first.station_id,
+                        it.first.name,
+                        it.first.lat,
+                        it.first.lon,
+                        it.first.capacity,
+                        it.first.stationCode,
+                        it.second.numBikesAvailable,
+                        it.second.num_bikes_available_types[0]["mechanical"],
+                        it.second.num_bikes_available_types[1]["ebike"],
+                        it.second.numDocksAvailable,
+                        it.second.is_installed,
+                        it.second.is_returning,
+                        it.second.is_renting,
+                        it.second.last_reported,
+                        !it.first.rental_methods.isNullOrEmpty()
+                    )
+                }.forEach { stationEntity: StationEntity ->
+                    if (stationEntity.is_installed == 1) {
+                        stationDao.insertStation(stationEntity)
+                        stationEntityList.add(stationEntity)
+                    }
+                }
 
-            stationsResult.data.stations.zip(stationsDetailsResults.data.stations).map {
-                StationEntity(
-                    it.first.station_id,
-                    it.first.name,
-                    it.first.lat,
-                    it.first.lon,
-                    it.first.capacity,
-                    it.first.stationCode,
-                    it.second.numBikesAvailable,
-                    it.second.num_bikes_available_types[0]["mechanical"],
-                    it.second.num_bikes_available_types[1]["ebike"],
-                    it.second.numDocksAvailable,
-                    it.second.is_installed,
-                    it.second.is_returning,
-                    it.second.is_renting,
-                    it.second.last_reported,
-                    !it.first.rental_methods.isNullOrEmpty()
-                )
-            }.forEach { stationEntity: StationEntity ->
-                if (stationEntity.is_installed == 1) {
-                    stationDao.insertStation(stationEntity)
-                    stationEntityList.add(stationEntity)
+                currentJob?.start()
+
+                stationDatabase.close()
+                view.clearAnimation()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context,
+                        "Synchronisation terminé. Les stations ont été actualisées",
+                        Toast.LENGTH_SHORT).show()
+                    updateClusteredMarkers(mMap, actionButtonBoolean)
                 }
             }
-
-            stationDatabase.close()
+        } else {
             view.clearAnimation()
-
-            withContext(Dispatchers.Main) {
-                Toast.makeText(applicationContext,
-                    "Synchronisation terminé. Les stations ont été actualisées",
-                    Toast.LENGTH_SHORT).show()
-                updateClusteredMarkers(mMap, actionButtonBoolean)
-            }
+            Toast.makeText(this,
+                "Activer votre connexion internet pour resynchroniser les données des stations",
+                Toast.LENGTH_LONG).show()
         }
-
-
-
-
     }
 
     // Synchronous API call and store data in database and stationEntityList
@@ -607,17 +615,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 if (stationEntityList.isEmpty()) {
                     synchroApi()
                     addClusteredMarkers(mMap, actionButtonBoolean)
-                }
-                syncFloatingActionButton.setOnClickListener {
-                    val rotation = AnimationUtils.loadAnimation(this, R.anim.ic_play_synchro_api)
-                    it.startAnimation(rotation)
-                    asynchroApi(it)
-                }
-            } else {
-                syncFloatingActionButton.setOnClickListener {
-                    Toast.makeText(this,
-                        "Activer votre connexion internet pour resynchroniser les données des stations",
-                        Toast.LENGTH_LONG).show()
                 }
             }
         }

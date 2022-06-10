@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.velib_app.bdd.FavorisDatabase
 import com.example.velib_app.utils.CheckNetworkConnection
-import com.example.velib_app.utils.isInternetOn
 import kotlinx.coroutines.runBlocking
+
 class FavorisActivity : AppCompatActivity() {
 
     private lateinit var checkNetworkConnection: CheckNetworkConnection

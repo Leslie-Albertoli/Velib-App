@@ -9,7 +9,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 
-var isInternetOn: Boolean = false
+
 class CheckNetworkConnection (private val connectivityManager: ConnectivityManager):
     LiveData<Boolean>() {
 

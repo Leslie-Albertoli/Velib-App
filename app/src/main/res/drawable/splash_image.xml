@@ -12,8 +12,7 @@
 
     <item android:drawable="@drawable/ic_name_app"
         android:gravity="center"
-        android:top="260dp"
-        />
+        android:top="260dp" />
 
 
 

@@ -611,11 +611,9 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         checkNetworkConnection = CheckNetworkConnection(application)
         checkNetworkConnection.observe(this) { isConnected ->
             isInternetOn = isConnected
-            if (isInternetOn) {
-                if (stationEntityList.isEmpty()) {
-                    synchroApi()
-                    addClusteredMarkers(mMap, actionButtonBoolean)
-                }
+            if (isInternetOn && stationEntityList.isEmpty()) {
+                synchroApi()
+                addClusteredMarkers(mMap, actionButtonBoolean)
             }
         }
     }
